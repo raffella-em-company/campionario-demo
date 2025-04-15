@@ -1,0 +1,40 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f7f7f7;
+  }
+  
+  .container {
+    padding: 1rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  
+  input {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  button {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .scheda img {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+  
+  .variante {
+    margin-bottom: 1rem;
+  }
+  
+  .proforma {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 6px;
+  }
+  
