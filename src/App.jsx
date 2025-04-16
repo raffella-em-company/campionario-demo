@@ -1,19 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './index.css'
-import { articoliDemo } from './articoli'
+import Papa from 'papaparse'
 
 function App() {
   const [codice, setCodice] = useState("")
   const [articolo, setArticolo] = useState(null)
   const [proforma, setProforma] = useState([])
+  const [articoli, setArticoli] = useState([])
+
+  useEffect(() => {
+    Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
+      download: true,
+      header: true,
+      complete: (results) => {
+        setArticoli(results.data)
+      }
+    })
+  }, [])
 
   const cercaArticolo = () => {
-    const trovato = articoliDemo.find(a => a.codice.toLowerCase() === codice.toLowerCase())
+    const trovato = articoli.find(a => a.codice.toLowerCase() === codice.toLowerCase())
     setArticolo(trovato || null)
   }
 
-  const aggiungiAProforma = (variante) => {
-    setProforma([...proforma, { articolo: articolo.nome, variante }])
+  const aggiungiAProforma = () => {
+    if (articolo) {
+      setProforma([...proforma, articolo])
+    }
   }
 
   return (
@@ -31,13 +44,9 @@ function App() {
         <div className="scheda">
           <h2>{articolo.nome}</h2>
           <p>{articolo.descrizione}</p>
-          {articolo.varianti.map((v, i) => (
-            <div key={i} className="variante">
-              <img src={v.immagine} alt={v.nome} />
-              <p>{v.nome} - € {v.prezzo.toFixed(2)}</p>
-              <button onClick={() => aggiungiAProforma(v)}>Aggiungi</button>
-            </div>
-          ))}
+          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} />
+          <p>€ {parseFloat(articolo.prezzo).toFixed(2)}</p>
+          <button onClick={aggiungiAProforma}>Aggiungi</button>
         </div>
       )}
 
@@ -46,7 +55,7 @@ function App() {
           <h3>Proforma</h3>
           <ul>
             {proforma.map((item, i) => (
-              <li key={i}>{item.articolo} - {item.variante.nome} (€ {item.variante.prezzo.toFixed(2)})</li>
+              <li key={i}>{item.nome} - € {parseFloat(item.prezzo).toFixed(2)}</li>
             ))}
           </ul>
         </div>
