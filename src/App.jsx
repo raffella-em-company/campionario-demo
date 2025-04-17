@@ -21,8 +21,15 @@ const loadImageBase64 = async (url) => {
 const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetProforma) => {
   const pdf = new jsPDF()
 
-  const logo = await loadImageBase64('/logoEM.jpg')
-  pdf.addImage(logo, 'JPEG', 10, 5, 40, 12)
+  const logoPath = '/logoEM.jpg'
+  const logoBase64 = await loadImageBase64(logoPath)
+  const logoImg = new Image()
+  logoImg.src = logoPath
+  await new Promise(res => (logoImg.onload = res))
+  const logoRatio = logoImg.height / logoImg.width
+  const logoW = 40
+  const logoH = logoW * logoRatio
+  pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
 
   pdf.setFontSize(16)
   pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
@@ -36,30 +43,41 @@ const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetP
 
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
-
     const img = new Image()
     img.src = item.immagine
-    await new Promise(resolve => img.onload = resolve)
-    
-    const maxWidth = 25
+    await new Promise(res => (img.onload = res))
+
+    const rowHeight = 26
+    const col = {
+      img: { x: 10, w: 30 },
+      codice: { x: 40, w: 40 },
+      prezzo: { x: 80, w: 30 },
+      descrizione: { x: 110, w: 50 },
+      nota: { x: 160, w: 40 }
+    }
+
+    Object.values(col).forEach(c => {
+      pdf.rect(c.x, y, c.w, rowHeight)
+    })
+
+    // proporzione immagine
+    const imgW = col.img.w - 4
     const ratio = img.height / img.width
-    const finalHeight = maxWidth * ratio
-    
-    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, maxWidth, finalHeight)    
+    const imgH = imgW * ratio
+    const imgY = y + (rowHeight - imgH) / 2
+    pdf.addImage(imgBase64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
 
-    // celle stile excel
-    pdf.rect(35, y, 45, 25)
-    pdf.rect(80, y, 30, 25)
-    pdf.rect(110, y, 45, 25)
-    pdf.rect(155, y, 45, 25)
-
-    pdf.text(item.codice, 36, y + 10)
-    pdf.text(`€ ${formatPrezzo(item.prezzo)}`, 81, y + 10)
-    pdf.text(item.descrizione || '', 111, y + 10)
-    if (item.nota) pdf.text(item.nota, 156, y + 10)
+    // contenuto centrato
+    pdf.setFontSize(9)
+    pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
+    pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
+    pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
+    if (item.nota) {
+      pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
+    }
 
     totale += parseFloat(item.prezzo.toString().replace(",", "."))
-    y += 27
+    y += rowHeight + 2
 
     if (y > 260) {
       pdf.addPage()
@@ -213,6 +231,28 @@ function App() {
             rows={3}
             className="note-generali"
           ></textarea>
+          <table className="tabella-preview">
+            <thead>
+              <tr>
+                <th>Immagine</th>
+                <th>Codice</th>
+                <th>Prezzo</th>
+                <th>Descrizione</th>
+                <th>Nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              {proforma.map((item, i) => (
+                <tr key={i}>
+                  <td><img src={item.immagine} alt="img" /></td>
+                  <td>{item.codice}</td>
+                  <td>€ {formatPrezzo(item.prezzo)}</td>
+                  <td>{item.descrizione}</td>
+                  <td>{item.nota}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           <button
             className="btn-pdf"
             onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)}
