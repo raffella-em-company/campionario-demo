@@ -30,7 +30,7 @@ function App() {
   const [cliente, setCliente] = useState("")
   const [rappresentante, setRappresentante] = useState("")
   const [popupImg, setPopupImg] = useState(null)
-  const [previewSrc, setPreviewSrc] = useState(null)
+  const [previewImg, setPreviewImg] = useState(null)
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -79,22 +79,19 @@ function App() {
     localStorage.removeItem("proforma")
   }
 
-  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, reset = false) => {
+  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, mode = 'preview') => {
     const pdf = new jsPDF()
-
     const logoPath = '/logoEM.jpg'
     const logoBase64 = await loadImageBase64(logoPath)
     const logoImg = new Image()
     logoImg.src = logoPath
     await new Promise(res => (logoImg.onload = res))
-    const logoRatio = logoImg.height / logoImg.width
     const logoW = 40
-    const logoH = logoW * logoRatio
+    const logoH = logoW * (logoImg.height / logoImg.width)
     pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
 
     pdf.setFontSize(16)
     pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
-
     pdf.setFontSize(10)
     pdf.text(`Cliente: ${cliente}`, 10, 30)
     pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
@@ -117,9 +114,7 @@ function App() {
         nota: { x: 160, w: 40 }
       }
 
-      Object.values(col).forEach(c => {
-        pdf.rect(c.x, y, c.w, rowHeight)
-      })
+      Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
 
       const imgW = col.img.w - 4
       const ratio = img.height / img.width
@@ -137,7 +132,6 @@ function App() {
 
       totale += parseFloat(item.prezzo.toString().replace(",", "."))
       y += rowHeight + 2
-
       if (y > 260) {
         pdf.addPage()
         y = 20
@@ -154,20 +148,18 @@ function App() {
       pdf.text(noteGenerali, 10, y + 6)
     }
 
-    if (reset) {
+    if (mode === 'export') {
       pdf.save("proforma.pdf")
       resetProforma()
     } else {
-      const blob = pdf.output('blob')
-      const blobUrl = URL.createObjectURL(blob)
-      setPreviewSrc(blobUrl)
+      const base64 = pdf.output('dataurlstring')
+      setPreviewImg(base64)
     }
   }
 
   return (
     <div className="container">
       <h1>Campionario</h1>
-
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
 
@@ -197,9 +189,9 @@ function App() {
         </div>
       )}
 
-      {previewSrc && (
-        <div className="popup" onClick={() => setPreviewSrc(null)}>
-          <iframe src={previewSrc} title="Anteprima PDF" style={{ width: '90%', height: '90%', border: 'none', borderRadius: '6px' }} />
+      {previewImg && (
+        <div className="popup" onClick={() => setPreviewImg(null)}>
+          <img src={previewImg} alt="Anteprima PDF" />
         </div>
       )}
 
@@ -225,8 +217,8 @@ function App() {
             className="note-generali"
           ></textarea>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}>Anteprima</button>
-            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, true)}>Esporta PDF</button>
+            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}>Anteprima</button>
+            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}>Esporta PDF</button>
           </div>
         </div>
       )}
