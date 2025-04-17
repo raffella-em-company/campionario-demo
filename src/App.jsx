@@ -148,7 +148,12 @@ function App() {
     }
 
     if (mode === 'export') {
-      pdf.save("proforma.pdf")
+      const nomeFile = cliente
+      ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf`
+      : 'proforma-senza-nome.pdf'
+    
+    pdf.save(nomeFile)
+    
       resetProforma()
     } else {
       const blob = pdf.output('blob')
