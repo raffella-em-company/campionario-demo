@@ -97,6 +97,11 @@ function App() {
     setProforma(nuovaLista)
   }
 
+  const zoomaImmagine = (url) => {
+    const w = window.open('')
+    w.document.write(`<img src="${url}" style="width:100%">`)
+  }
+
   return (
     <div className="container">
       <h1>Campionario</h1>
@@ -115,7 +120,7 @@ function App() {
             <div key={i} className="scheda">
               <h3>{art.codice}</h3>
               <p>{art.descrizione}</p>
-              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px' }} />
+              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px', cursor: 'zoom-in' }} onClick={() => zoomaImmagine(art.immagine)} />
               <p>
                 € {formatPrezzo(art.prezzo)}
                 <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
@@ -136,7 +141,8 @@ function App() {
                 <img
                   src={item.immagine}
                   alt={item.codice}
-                  style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }}
+                  style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px', cursor: 'zoom-in' }}
+                  onClick={() => zoomaImmagine(item.immagine)}
                 />
                 {item.codice} - € {formatPrezzo(item.prezzo)}
                 <button
