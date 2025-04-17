@@ -18,28 +18,32 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
+const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetProforma) => {
   const pdf = new jsPDF()
   pdf.setFontSize(16)
-  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+  pdf.text("Proforma Ordine Campionario", 105, 15, null, null, "center")
 
   pdf.setFontSize(10)
-  pdf.text(`Cliente: ${cliente}`, 10, 30)
-  pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
+  pdf.text(`Cliente: ${cliente}`, 10, 25)
+  pdf.text(`Rappresentante: ${rappresentante}`, 10, 30)
 
-  let y = 50
+  let y = 40
   let totale = 0
 
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
-    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30)
-    pdf.setFontSize(10)
-    pdf.text(`Codice: ${item.codice}`, 45, y + 5)
+    pdf.setDrawColor(0)
+    pdf.setLineWidth(0.1)
+    pdf.rect(10, y, 190, 35)
+
+    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, 30, 30)
+    pdf.text(`Codice: ${item.codice}`, 45, y + 8)
     pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
-    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
-    if (item.nota) pdf.text(`Nota: ${item.nota}`, 45, y + 35)
+    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 22)
+    if (item.nota) pdf.text(`Nota: ${item.nota}`, 45, y + 29)
+
     totale += parseFloat(item.prezzo.toString().replace(",", "."))
-    y += item.nota ? 50 : 40
+    y += 38
 
     if (y > 250) {
       pdf.addPage()
@@ -48,16 +52,17 @@ const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
   }
 
   pdf.setFontSize(12)
-  pdf.text(`Totale: € ${totale.toFixed(2)}`, 140, y + 10)
+  pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
 
   if (noteGenerali) {
-    y += 20
+    y += 15
     pdf.setFontSize(10)
     pdf.text("Note generali:", 10, y)
-    pdf.text(noteGenerali, 10, y + 10)
+    pdf.text(noteGenerali, 10, y + 6)
   }
 
   pdf.save("proforma.pdf")
+  resetProforma()
 }
 
 function App() {
@@ -116,6 +121,12 @@ function App() {
     setProforma(nuovaLista)
   }
 
+  const resetProforma = () => {
+    setProforma([])
+    setNoteGenerali("")
+    localStorage.removeItem("proforma")
+  }
+
   return (
     <div className="container">
       <h1>Campionario</h1>
@@ -123,13 +134,12 @@ function App() {
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="search-bar">
         <input
           type="text"
           placeholder="Codice articolo"
           value={codice}
           onChange={(e) => setCodice(e.target.value)}
-          style={{ flexGrow: 1 }}
         />
         <button onClick={cercaArticolo}>Cerca</button>
       </div>
@@ -144,7 +154,6 @@ function App() {
               <img
                 src={art.immagine}
                 alt={art.codice}
-                style={{ maxWidth: '200px', cursor: 'zoom-in' }}
                 onClick={() => setPopupImg(art.immagine)}
               />
               <p>€ {formatPrezzo(art.prezzo)}</p>
@@ -188,9 +197,9 @@ function App() {
             value={noteGenerali}
             onChange={(e) => setNoteGenerali(e.target.value)}
             rows={3}
-            style={{ width: '100%', marginTop: '10px' }}
+            className="note-generali"
           ></textarea>
-          <button onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)} style={{ marginTop: '10px' }}>
+          <button onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)} className="btn-pdf">
             Esporta PDF
           </button>
         </div>
