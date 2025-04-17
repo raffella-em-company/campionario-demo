@@ -18,90 +18,6 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetProforma) => {
-  const pdf = await creaPDF(proforma, noteGenerali, cliente, rappresentante)
-  pdf.save("proforma.pdf")
-  resetProforma()
-}
-
-const creaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
-  const pdf = new jsPDF()
-
-  const logoPath = '/logoEM.jpg'
-  const logoBase64 = await loadImageBase64(logoPath)
-  const logoImg = new Image()
-  logoImg.src = logoPath
-  await new Promise(res => (logoImg.onload = res))
-  const logoRatio = logoImg.height / logoImg.width
-  const logoW = 40
-  const logoH = logoW * logoRatio
-  pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
-
-  pdf.setFontSize(16)
-  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
-
-  pdf.setFontSize(10)
-  pdf.text(`Cliente: ${cliente}`, 10, 30)
-  pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
-
-  let y = 45
-  let totale = 0
-
-  for (const item of proforma) {
-    const imgBase64 = await loadImageBase64(item.immagine)
-    const img = new Image()
-    img.src = item.immagine
-    await new Promise(res => (img.onload = res))
-
-    const rowHeight = 26
-    const col = {
-      img: { x: 10, w: 30 },
-      codice: { x: 40, w: 40 },
-      prezzo: { x: 80, w: 30 },
-      descrizione: { x: 110, w: 50 },
-      nota: { x: 160, w: 40 }
-    }
-
-    Object.values(col).forEach(c => {
-      pdf.rect(c.x, y, c.w, rowHeight)
-    })
-
-    const imgW = col.img.w - 4
-    const ratio = img.height / img.width
-    const imgH = imgW * ratio
-    const imgY = y + (rowHeight - imgH) / 2
-    pdf.addImage(imgBase64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
-
-    pdf.setFontSize(9)
-    pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
-    pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
-    pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
-    if (item.nota) {
-      pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
-    }
-
-    totale += parseFloat(item.prezzo.toString().replace(",", "."))
-    y += rowHeight + 2
-
-    if (y > 260) {
-      pdf.addPage()
-      y = 20
-    }
-  }
-
-  pdf.setFontSize(12)
-  pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
-
-  if (noteGenerali) {
-    y += 15
-    pdf.setFontSize(10)
-    pdf.text("Note generali:", 10, y)
-    pdf.text(noteGenerali, 10, y + 6)
-  }
-
-  return pdf
-}
-
 function App() {
   const [codice, setCodice] = useState("")
   const [articoliTrovati, setArticoliTrovati] = useState([])
@@ -163,11 +79,89 @@ function App() {
     localStorage.removeItem("proforma")
   }
 
-  const apriAnteprima = async () => {
-    const pdf = await creaPDF(proforma, noteGenerali, cliente, rappresentante)
-    const blob = pdf.output('blob')
-    const blobUrl = URL.createObjectURL(blob)
-    setPreviewSrc(blobUrl)
+  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, reset = false) => {
+    const pdf = new jsPDF()
+
+    const logoPath = '/logoEM.jpg'
+    const logoBase64 = await loadImageBase64(logoPath)
+    const logoImg = new Image()
+    logoImg.src = logoPath
+    await new Promise(res => (logoImg.onload = res))
+    const logoRatio = logoImg.height / logoImg.width
+    const logoW = 40
+    const logoH = logoW * logoRatio
+    pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
+
+    pdf.setFontSize(16)
+    pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+
+    pdf.setFontSize(10)
+    pdf.text(`Cliente: ${cliente}`, 10, 30)
+    pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
+
+    let y = 45
+    let totale = 0
+
+    for (const item of proforma) {
+      const imgBase64 = await loadImageBase64(item.immagine)
+      const img = new Image()
+      img.src = item.immagine
+      await new Promise(res => (img.onload = res))
+
+      const rowHeight = 26
+      const col = {
+        img: { x: 10, w: 30 },
+        codice: { x: 40, w: 40 },
+        prezzo: { x: 80, w: 30 },
+        descrizione: { x: 110, w: 50 },
+        nota: { x: 160, w: 40 }
+      }
+
+      Object.values(col).forEach(c => {
+        pdf.rect(c.x, y, c.w, rowHeight)
+      })
+
+      const imgW = col.img.w - 4
+      const ratio = img.height / img.width
+      const imgH = imgW * ratio
+      const imgY = y + (rowHeight - imgH) / 2
+      pdf.addImage(imgBase64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
+
+      pdf.setFontSize(9)
+      pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
+      pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
+      pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
+      if (item.nota) {
+        pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
+      }
+
+      totale += parseFloat(item.prezzo.toString().replace(",", "."))
+      y += rowHeight + 2
+
+      if (y > 260) {
+        pdf.addPage()
+        y = 20
+      }
+    }
+
+    pdf.setFontSize(12)
+    pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
+
+    if (noteGenerali) {
+      y += 15
+      pdf.setFontSize(10)
+      pdf.text("Note generali:", 10, y)
+      pdf.text(noteGenerali, 10, y + 6)
+    }
+
+    if (reset) {
+      pdf.save("proforma.pdf")
+      resetProforma()
+    } else {
+      const blob = pdf.output('blob')
+      const blobUrl = URL.createObjectURL(blob)
+      setPreviewSrc(blobUrl)
+    }
   }
 
   return (
@@ -223,11 +217,16 @@ function App() {
               </li>
             ))}
           </ul>
-          <textarea placeholder="Note generali..." value={noteGenerali} onChange={(e) => setNoteGenerali(e.target.value)} rows={3} className="note-generali"></textarea>
-
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button className="btn-pdf" onClick={apriAnteprima}>Anteprima</button>
-            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)}>Esporta PDF</button>
+          <textarea
+            placeholder="Note generali..."
+            value={noteGenerali}
+            onChange={(e) => setNoteGenerali(e.target.value)}
+            rows={3}
+            className="note-generali"
+          ></textarea>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}>Anteprima</button>
+            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, true)}>Esporta PDF</button>
           </div>
         </div>
       )}
