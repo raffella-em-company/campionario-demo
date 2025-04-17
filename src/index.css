@@ -1,40 +1,123 @@
 body {
-    font-family: sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f7f7f7;
+  font-family: 'Helvetica Neue', sans-serif;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+  color: #333;
+}
+
+.container {
+  padding: 1rem;
+  max-width: 900px;
+  margin: auto;
+}
+
+h1, h2, h3 {
+  text-align: center;
+  color: #2c3e50;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.scheda, .proforma {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.scheda img {
+  width: 100%;
+  max-width: 200px;
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+.proforma li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.proforma img {
+  width: 60px;
+  height: auto;
+  margin-right: 1rem;
+  border-radius: 4px;
+}
+
+.proforma textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 0.9rem;
+}
+
+textarea {
+  font-family: inherit;
+}
+
+button[title="Rimuovi"] {
+  margin-left: auto;
+  font-size: 1.2rem;
+  background: transparent;
+  border: none;
+  color: #cc0000;
+  cursor: pointer;
+}
+
+@media screen and (min-width: 768px) {
+  .proforma li {
+    flex-direction: row;
   }
-  
-  .container {
-    padding: 1rem;
-    max-width: 480px;
-    margin: 0 auto;
+
+  .proforma textarea {
+    width: auto;
+    margin-left: 1rem;
+    flex: 1;
   }
-  
-  input {
-    width: 100%;
-    padding: 0.5rem;
-    margin-top: 1rem;
+
+  .scheda {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
   }
-  
-  button {
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
-  }
-  
+
   .scheda img {
-    width: 100%;
-    margin: 0.5rem 0;
+    flex-shrink: 0;
   }
-  
-  .variante {
-    margin-bottom: 1rem;
-  }
-  
-  .proforma {
-    margin-top: 2rem;
-    padding: 1rem;
-    background: #fff;
-    border-radius: 6px;
-  }
-  
+}
