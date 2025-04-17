@@ -30,7 +30,6 @@ function App() {
   const [cliente, setCliente] = useState("")
   const [rappresentante, setRappresentante] = useState("")
   const [popupImg, setPopupImg] = useState(null)
-  const [previewImg, setPreviewImg] = useState(null)
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -152,8 +151,9 @@ function App() {
       pdf.save("proforma.pdf")
       resetProforma()
     } else {
-      const base64 = pdf.output('dataurlstring')
-      setPreviewImg(base64)
+      const blob = pdf.output('blob')
+      const blobUrl = URL.createObjectURL(blob)
+      window.open(blobUrl, '_blank')
     }
   }
 
@@ -186,12 +186,6 @@ function App() {
       {popupImg && (
         <div className="popup" onClick={() => setPopupImg(null)}>
           <img src={popupImg} alt="Zoom" />
-        </div>
-      )}
-
-      {previewImg && (
-        <div className="popup" onClick={() => setPreviewImg(null)}>
-          <img src={previewImg} alt="Anteprima PDF" />
         </div>
       )}
 
