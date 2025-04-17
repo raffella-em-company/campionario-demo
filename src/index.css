@@ -184,5 +184,12 @@ button:hover {
     display: block;
     margin: auto;
   }
+  .popup iframe {
+    width: 90%;
+    height: 90%;
+    border: none;
+    border-radius: 6px;
+  }
+  
   
 }

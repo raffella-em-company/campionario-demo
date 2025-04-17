@@ -19,6 +19,12 @@ const loadImageBase64 = async (url) => {
 }
 
 const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetProforma) => {
+  const pdf = await creaPDF(proforma, noteGenerali, cliente, rappresentante)
+  pdf.save("proforma.pdf")
+  resetProforma()
+}
+
+const creaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
   const pdf = new jsPDF()
 
   const logoPath = '/logoEM.jpg'
@@ -60,14 +66,12 @@ const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetP
       pdf.rect(c.x, y, c.w, rowHeight)
     })
 
-    // proporzione immagine
     const imgW = col.img.w - 4
     const ratio = img.height / img.width
     const imgH = imgW * ratio
     const imgY = y + (rowHeight - imgH) / 2
     pdf.addImage(imgBase64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
 
-    // contenuto centrato
     pdf.setFontSize(9)
     pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
     pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
@@ -95,8 +99,7 @@ const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetP
     pdf.text(noteGenerali, 10, y + 6)
   }
 
-  pdf.save("proforma.pdf")
-  resetProforma()
+  return pdf
 }
 
 function App() {
@@ -111,6 +114,7 @@ function App() {
   const [cliente, setCliente] = useState("")
   const [rappresentante, setRappresentante] = useState("")
   const [popupImg, setPopupImg] = useState(null)
+  const [previewSrc, setPreviewSrc] = useState(null)
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -159,6 +163,13 @@ function App() {
     localStorage.removeItem("proforma")
   }
 
+  const apriAnteprima = async () => {
+    const pdf = await creaPDF(proforma, noteGenerali, cliente, rappresentante)
+    const blob = pdf.output('blob')
+    const blobUrl = URL.createObjectURL(blob)
+    setPreviewSrc(blobUrl)
+  }
+
   return (
     <div className="container">
       <h1>Campionario</h1>
@@ -167,12 +178,7 @@ function App() {
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
 
       <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Codice articolo"
-          value={codice}
-          onChange={(e) => setCodice(e.target.value)}
-        />
+        <input type="text" placeholder="Codice articolo" value={codice} onChange={(e) => setCodice(e.target.value)} />
         <button onClick={cercaArticolo}>Cerca</button>
       </div>
 
@@ -183,11 +189,7 @@ function App() {
             <div key={i} className="scheda">
               <h3>{art.codice}</h3>
               <p>{art.descrizione}</p>
-              <img
-                src={art.immagine}
-                alt={art.codice}
-                onClick={() => setPopupImg(art.immagine)}
-              />
+              <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
               <p>€ {formatPrezzo(art.prezzo)}</p>
               <button onClick={() => aggiungiAProforma(art)}>Aggiungi</button>
             </div>
@@ -201,6 +203,12 @@ function App() {
         </div>
       )}
 
+      {previewSrc && (
+        <div className="popup" onClick={() => setPreviewSrc(null)}>
+          <iframe src={previewSrc} title="Anteprima PDF" style={{ width: '90%', height: '90%', border: 'none', borderRadius: '6px' }} />
+        </div>
+      )}
+
       {proforma.length > 0 && (
         <div className="proforma">
           <h3>Proforma</h3>
@@ -208,57 +216,19 @@ function App() {
             {proforma.map((item, i) => (
               <li key={i} onContextMenu={(e) => { e.preventDefault(); mostraMenuRimozione(i) }}>
                 <div className="info">
-                  <img
-                    src={item.immagine}
-                    alt={item.codice}
-                    className="thumb"
-                    onClick={() => setPopupImg(item.immagine)}
-                  />
+                  <img src={item.immagine} alt={item.codice} className="thumb" onClick={() => setPopupImg(item.immagine)} />
                   <span>{item.codice} - € {formatPrezzo(item.prezzo)}</span>
                 </div>
-                <textarea
-                  placeholder="Nota su questo articolo..."
-                  value={item.nota || ''}
-                  onChange={(e) => aggiornaNota(i, e.target.value)}
-                ></textarea>
+                <textarea placeholder="Nota su questo articolo..." value={item.nota || ''} onChange={(e) => aggiornaNota(i, e.target.value)}></textarea>
               </li>
             ))}
           </ul>
-          <textarea
-            placeholder="Note generali..."
-            value={noteGenerali}
-            onChange={(e) => setNoteGenerali(e.target.value)}
-            rows={3}
-            className="note-generali"
-          ></textarea>
-          <table className="tabella-preview">
-            <thead>
-              <tr>
-                <th>Immagine</th>
-                <th>Codice</th>
-                <th>Prezzo</th>
-                <th>Descrizione</th>
-                <th>Nota</th>
-              </tr>
-            </thead>
-            <tbody>
-              {proforma.map((item, i) => (
-                <tr key={i}>
-                  <td><img src={item.immagine} alt="img" /></td>
-                  <td>{item.codice}</td>
-                  <td>€ {formatPrezzo(item.prezzo)}</td>
-                  <td>{item.descrizione}</td>
-                  <td>{item.nota}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button
-            className="btn-pdf"
-            onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)}
-          >
-            Esporta PDF
-          </button>
+          <textarea placeholder="Note generali..." value={noteGenerali} onChange={(e) => setNoteGenerali(e.target.value)} rows={3} className="note-generali"></textarea>
+
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button className="btn-pdf" onClick={apriAnteprima}>Anteprima</button>
+            <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)}>Esporta PDF</button>
+          </div>
         </div>
       )}
     </div>
