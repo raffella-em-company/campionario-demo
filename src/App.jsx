@@ -37,13 +37,15 @@ const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetP
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
 
-    const imgW = 20
-    const imgH = 20
-    pdf.setDrawColor(0)
-    pdf.setLineWidth(0.1)
-    pdf.rect(10, y, 190, 25)
-
-    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, imgW, imgH)
+    const img = new Image()
+    img.src = item.immagine
+    await new Promise(resolve => img.onload = resolve)
+    
+    const maxWidth = 25
+    const ratio = img.height / img.width
+    const finalHeight = maxWidth * ratio
+    
+    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, maxWidth, finalHeight)    
 
     // celle stile excel
     pdf.rect(35, y, 45, 25)
