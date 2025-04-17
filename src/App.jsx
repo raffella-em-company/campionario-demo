@@ -19,12 +19,17 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-const generaPDF = async (proforma, noteGenerali) => {
+const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
   const pdf = new jsPDF()
   pdf.setFontSize(16)
   pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
   let y = 30
   let totale = 0
+
+  pdf.setFontSize(12)
+  pdf.text(`Cliente: ${cliente}`, 10, y)
+  pdf.text(`Rappresentante: ${rappresentante}`, 10, y + 10)
+  y += 20
 
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
@@ -59,10 +64,11 @@ const generaPDF = async (proforma, noteGenerali) => {
 function App() {
   const [codice, setCodice] = useState("")
   const [articoliTrovati, setArticoliTrovati] = useState([])
-  const [proforma, setProforma] = useState([])
+  const [proforma, setProforma] = useState(() => JSON.parse(localStorage.getItem("proforma")) || [])
   const [articoli, setArticoli] = useState([])
   const [noteGenerali, setNoteGenerali] = useState("")
-  const [zoomUrl, setZoomUrl] = useState(null)
+  const [cliente, setCliente] = useState("")
+  const [rappresentante, setRappresentante] = useState("")
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -73,6 +79,10 @@ function App() {
       }
     })
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem("proforma", JSON.stringify(proforma))
+  }, [proforma])
 
   const cercaArticolo = () => {
     const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
@@ -98,16 +108,39 @@ function App() {
     setProforma(nuovaLista)
   }
 
+  const zoomaImmagine = (url) => {
+    const w = window.open('')
+    w.document.write(`<img src="${url}" style="width:100%">`)
+  }
+
   return (
     <div className="container">
       <h1>Campionario</h1>
-      <input
-        type="text"
-        placeholder="Codice articolo"
-        value={codice}
-        onChange={(e) => setCodice(e.target.value)}
-      />
-      <button onClick={cercaArticolo}>Cerca</button>
+
+      <div className="info-clienti">
+        <input
+          type="text"
+          placeholder="Cliente"
+          value={cliente}
+          onChange={(e) => setCliente(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Rappresentante"
+          value={rappresentante}
+          onChange={(e) => setRappresentante(e.target.value)}
+        />
+      </div>
+
+      <div className="cerca-wrapper">
+        <input
+          type="text"
+          placeholder="Codice articolo"
+          value={codice}
+          onChange={(e) => setCodice(e.target.value)}
+        />
+        <button onClick={cercaArticolo}>Cerca</button>
+      </div>
 
       {articoliTrovati.length > 0 && (
         <div className="risultati">
@@ -116,7 +149,7 @@ function App() {
             <div key={i} className="scheda">
               <h3>{art.codice}</h3>
               <p>{art.descrizione}</p>
-              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px', cursor: 'zoom-in' }} onClick={() => setZoomUrl(art.immagine)} />
+              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px', cursor: 'zoom-in' }} onClick={() => zoomaImmagine(art.immagine)} />
               <p>
                 € {formatPrezzo(art.prezzo)}
                 <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
@@ -138,19 +171,19 @@ function App() {
                   src={item.immagine}
                   alt={item.codice}
                   style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px', cursor: 'zoom-in' }}
-                  onClick={() => setZoomUrl(item.immagine)}
+                  onClick={() => zoomaImmagine(item.immagine)}
                 />
                 {item.codice} - € {formatPrezzo(item.prezzo)}
                 <button
                   onClick={() => rimuoviDaProforma(i)}
-                  style={{ marginLeft: '10px' }}
+                  style={{ marginLeft: '10px', color: 'darkred', fontSize: '0.8rem' }}
                 >❌</button>
                 <br />
                 <textarea
                   placeholder="Nota su questo articolo..."
                   value={item.nota || ''}
                   onChange={(e) => aggiornaNota(i, e.target.value)}
-                  rows={2}
+                  rows={3}
                   style={{ width: '100%', marginTop: '5px' }}
                 ></textarea>
               </li>
@@ -163,21 +196,9 @@ function App() {
             rows={3}
             style={{ width: '100%', marginTop: '10px' }}
           ></textarea>
-          <button onClick={() => generaPDF(proforma, noteGenerali)} style={{ marginTop: '10px' }}>
+          <button onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)} style={{ marginTop: '10px' }}>
             Esporta PDF
           </button>
-        </div>
-      )}
-
-      {zoomUrl && (
-        <div
-          style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
-          }}
-          onClick={() => setZoomUrl(null)}
-        >
-          <img src={zoomUrl} alt="Zoom" style={{ maxWidth: '90%', maxHeight: '90%' }} />
         </div>
       )}
     </div>
