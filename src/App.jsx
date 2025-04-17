@@ -151,9 +151,8 @@ function App() {
       pdf.save("proforma.pdf")
       resetProforma()
     } else {
-      const blob = pdf.output('blob')
-      const blobUrl = URL.createObjectURL(blob)
-      window.open(blobUrl, '_blank')
+      const dataUrl = pdf.output('dataurlstring')
+      window.open(dataUrl, '_blank')      
     }
   }
 
