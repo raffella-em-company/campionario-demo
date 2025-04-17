@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './index.css'
 import Papa from 'papaparse'
+import jsPDF from 'jspdf'
 
 function App() {
   const [codice, setCodice] = useState("")
@@ -17,6 +18,8 @@ function App() {
       }
     })
   }, [])
+
+  const formatPrezzo = (val) => parseFloat(val.replace(',', '.')).toFixed(2)
 
   const cercaArticolo = () => {
     const trovato = articoli.find(a => a.codice.toLowerCase() === codice.toLowerCase())
@@ -44,8 +47,8 @@ function App() {
         <div className="scheda">
           <h2>{articolo.nome}</h2>
           <p>{articolo.descrizione}</p>
-          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} referrerPolicy="no-referrer"/>
-          <p>€ {parseFloat(articolo.prezzo).toFixed(2)}</p>
+          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} referrerPolicy="no-referrer" />
+          <p>€ {formatPrezzo(articolo.prezzo)}</p>
           <button onClick={aggiungiAProforma}>Aggiungi</button>
         </div>
       )}
@@ -55,7 +58,10 @@ function App() {
           <h3>Proforma</h3>
           <ul>
             {proforma.map((item, i) => (
-              <li key={i}>{item.nome} - € {parseFloat(item.prezzo).toFixed(2)}</li>
+              <li key={i}>
+                <img src={item.immagine} alt="" style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }} />
+                {item.nome} - € {formatPrezzo(item.prezzo)}
+              </li>
             ))}
           </ul>
           <button onClick={() => generaPDF(proforma)}>Esporta PDF</button>
@@ -65,9 +71,7 @@ function App() {
   )
 }
 
-import jsPDF from 'jspdf'
-
-// Funzione di utilità per caricare immagini da URL
+// --- utility
 const loadImageBase64 = async (url) => {
   const res = await fetch(url)
   const blob = await res.blob()
@@ -78,7 +82,8 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-// Generazione PDF con immagini
+const formatPrezzo = (val) => parseFloat(val.replace(',', '.')).toFixed(2)
+
 const generaPDF = async (proforma) => {
   const pdf = new jsPDF()
   pdf.setFontSize(16)
@@ -88,10 +93,10 @@ const generaPDF = async (proforma) => {
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
 
-    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30) // img a sinistra
+    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30)
     pdf.setFontSize(10)
     pdf.text(`Codice: ${item.nome}`, 45, y + 5)
-    pdf.text(`Prezzo: € ${parseFloat(item.prezzo).toFixed(2)}`, 45, y + 15)
+    pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
     pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
     y += 40
 
@@ -103,6 +108,5 @@ const generaPDF = async (proforma) => {
 
   pdf.save("proforma.pdf")
 }
-
 
 export default App
