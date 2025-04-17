@@ -61,7 +61,9 @@ function App() {
   }, [])
 
   const cercaArticolo = () => {
-    const trovato = articoli.find(a => a.codice.toLowerCase() === codice.toLowerCase())
+    const trovato = articoli.find(a =>
+      a.codice.toLowerCase().startsWith(codice.toLowerCase())
+    )
     setArticolo(trovato || null)
   }
 
@@ -69,6 +71,12 @@ function App() {
     if (articolo) {
       setProforma([...proforma, articolo])
     }
+  }
+
+  const rimuoviDaProforma = (index) => {
+    const nuovaLista = [...proforma]
+    nuovaLista.splice(index, 1)
+    setProforma(nuovaLista)
   }
 
   return (
@@ -104,6 +112,7 @@ function App() {
                   style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }}
                 />
                 {item.nome} - € {formatPrezzo(item.prezzo)}
+                <button onClick={() => rimuoviDaProforma(i)} style={{ marginLeft: '10px' }}>❌</button>
               </li>
             ))}
           </ul>
