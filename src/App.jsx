@@ -30,7 +30,7 @@ const generaPDF = async (proforma, noteGenerali) => {
     const imgBase64 = await loadImageBase64(item.immagine)
     pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30)
     pdf.setFontSize(10)
-    pdf.text(`Codice: ${item.nome}`, 45, y + 5)
+    pdf.text(`Codice: ${item.codice}`, 45, y + 5)
     pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
     pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
     if (item.nota) pdf.text(`Nota: ${item.nota}`, 45, y + 35)
@@ -75,6 +75,9 @@ function App() {
 
   const cercaArticolo = () => {
     const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
+    if (trovati.length === 0) {
+      alert("Nessun articolo trovato. Controlla il codice inserito.")
+    }
     setArticoliTrovati(trovati)
   }
 
@@ -110,10 +113,11 @@ function App() {
           <h2>Risultati:</h2>
           {articoliTrovati.map((art, i) => (
             <div key={i} className="scheda">
-              <h3>{art.nome}</h3>
+              <h3>{art.codice}</h3>
               <p>{art.descrizione}</p>
-              <img src={art.immagine} alt={art.nome} style={{ maxWidth: '200px' }} />
-              <p>€ {formatPrezzo(art.prezzo)}
+              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px' }} />
+              <p>
+                € {formatPrezzo(art.prezzo)}
                 <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
                   Aggiungi
                 </button>
@@ -131,10 +135,10 @@ function App() {
               <li key={i}>
                 <img
                   src={item.immagine}
-                  alt={item.nome}
+                  alt={item.codice}
                   style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }}
                 />
-                {item.nome} - € {formatPrezzo(item.prezzo)}
+                {item.codice} - € {formatPrezzo(item.prezzo)}
                 <button
                   onClick={() => rimuoviDaProforma(i)}
                   style={{ marginLeft: '10px' }}
