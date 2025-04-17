@@ -62,6 +62,7 @@ function App() {
   const [proforma, setProforma] = useState([])
   const [articoli, setArticoli] = useState([])
   const [noteGenerali, setNoteGenerali] = useState("")
+  const [zoomUrl, setZoomUrl] = useState(null)
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -97,11 +98,6 @@ function App() {
     setProforma(nuovaLista)
   }
 
-  const zoomaImmagine = (url) => {
-    const w = window.open('')
-    w.document.write(`<img src="${url}" style="width:100%">`)
-  }
-
   return (
     <div className="container">
       <h1>Campionario</h1>
@@ -120,7 +116,7 @@ function App() {
             <div key={i} className="scheda">
               <h3>{art.codice}</h3>
               <p>{art.descrizione}</p>
-              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px', cursor: 'zoom-in' }} onClick={() => zoomaImmagine(art.immagine)} />
+              <img src={art.immagine} alt={art.codice} style={{ maxWidth: '200px', cursor: 'zoom-in' }} onClick={() => setZoomUrl(art.immagine)} />
               <p>
                 € {formatPrezzo(art.prezzo)}
                 <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
@@ -142,7 +138,7 @@ function App() {
                   src={item.immagine}
                   alt={item.codice}
                   style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px', cursor: 'zoom-in' }}
-                  onClick={() => zoomaImmagine(item.immagine)}
+                  onClick={() => setZoomUrl(item.immagine)}
                 />
                 {item.codice} - € {formatPrezzo(item.prezzo)}
                 <button
@@ -170,6 +166,18 @@ function App() {
           <button onClick={() => generaPDF(proforma, noteGenerali)} style={{ marginTop: '10px' }}>
             Esporta PDF
           </button>
+        </div>
+      )}
+
+      {zoomUrl && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+          }}
+          onClick={() => setZoomUrl(null)}
+        >
+          <img src={zoomUrl} alt="Zoom" style={{ maxWidth: '90%', maxHeight: '90%' }} />
         </div>
       )}
     </div>
