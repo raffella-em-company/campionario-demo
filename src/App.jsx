@@ -3,6 +3,47 @@ import './index.css'
 import Papa from 'papaparse'
 import jsPDF from 'jspdf'
 
+// --- Utilità
+const formatPrezzo = (val) => {
+  const parsed = parseFloat((val || '0').toString().replace(',', '.'))
+  return isNaN(parsed) ? '0.00' : parsed.toFixed(2)
+}
+
+const loadImageBase64 = async (url) => {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.readAsDataURL(blob)
+  })
+}
+
+const generaPDF = async (proforma) => {
+  const pdf = new jsPDF()
+  pdf.setFontSize(16)
+  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+  let y = 30
+
+  for (const item of proforma) {
+    const imgBase64 = await loadImageBase64(item.immagine)
+    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30)
+    pdf.setFontSize(10)
+    pdf.text(`Codice: ${item.nome}`, 45, y + 5)
+    pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
+    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
+    y += 40
+
+    if (y > 270) {
+      pdf.addPage()
+      y = 20
+    }
+  }
+
+  pdf.save("proforma.pdf")
+}
+
+// --- Componente principale
 function App() {
   const [codice, setCodice] = useState("")
   const [articolo, setArticolo] = useState(null)
@@ -18,8 +59,6 @@ function App() {
       }
     })
   }, [])
-
-  const formatPrezzo = (val) => parseFloat(val.replace(',', '.')).toFixed(2)
 
   const cercaArticolo = () => {
     const trovato = articoli.find(a => a.codice.toLowerCase() === codice.toLowerCase())
@@ -59,7 +98,11 @@ function App() {
           <ul>
             {proforma.map((item, i) => (
               <li key={i}>
-                <img src={item.immagine} alt="" style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }} />
+                <img
+                  src={item.immagine}
+                  alt={item.nome}
+                  style={{ width: '50px', verticalAlign: 'middle', marginRight: '10px' }}
+                />
                 {item.nome} - € {formatPrezzo(item.prezzo)}
               </li>
             ))}
@@ -69,44 +112,6 @@ function App() {
       )}
     </div>
   )
-}
-
-// --- utility
-const loadImageBase64 = async (url) => {
-  const res = await fetch(url)
-  const blob = await res.blob()
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result)
-    reader.readAsDataURL(blob)
-  })
-}
-
-const formatPrezzo = (val) => parseFloat(val.replace(',', '.')).toFixed(2)
-
-const generaPDF = async (proforma) => {
-  const pdf = new jsPDF()
-  pdf.setFontSize(16)
-  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
-  let y = 30
-
-  for (const item of proforma) {
-    const imgBase64 = await loadImageBase64(item.immagine)
-
-    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30)
-    pdf.setFontSize(10)
-    pdf.text(`Codice: ${item.nome}`, 45, y + 5)
-    pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
-    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
-    y += 40
-
-    if (y > 270) {
-      pdf.addPage()
-      y = 20
-    }
-  }
-
-  pdf.save("proforma.pdf")
 }
 
 export default App
