@@ -99,22 +99,21 @@ function App() {
     setProforma([...proforma, { ...item, nota: "" }])
   }
 
+  const mostraMenuRimozione = (index) => {
+    const conferma = window.confirm("Vuoi rimuovere questo articolo dalla proforma?")
+    if (conferma) rimuoviDaProforma(index)
+  }
+
+  const rimuoviDaProforma = (index) => {
+    const nuovaLista = [...proforma]
+    nuovaLista.splice(index, 1)
+    setProforma(nuovaLista)
+  }
+
   const aggiornaNota = (index, testo) => {
     const nuovaLista = [...proforma]
     nuovaLista[index].nota = testo
     setProforma(nuovaLista)
-  }
-
-  const apriPopup = (img) => setPopupImg(img)
-  const chiudiPopup = () => setPopupImg(null)
-
-  const azioneSuElemento = (index) => {
-    const scelta = window.prompt("Scrivi 'elimina' per rimuovere o 'annulla' per uscire")
-    if (scelta === 'elimina') {
-      const nuovaLista = [...proforma]
-      nuovaLista.splice(index, 1)
-      setProforma(nuovaLista)
-    }
   }
 
   return (
@@ -145,17 +144,19 @@ function App() {
               <img
                 src={art.immagine}
                 alt={art.codice}
-                style={{ maxWidth: '200px', cursor: 'pointer' }}
-                onClick={() => apriPopup(art.immagine)}
+                style={{ maxWidth: '200px', cursor: 'zoom-in' }}
+                onClick={() => setPopupImg(art.immagine)}
               />
-              <p>
-                € {formatPrezzo(art.prezzo)}
-                <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
-                  Aggiungi
-                </button>
-              </p>
+              <p>€ {formatPrezzo(art.prezzo)}</p>
+              <button onClick={() => aggiungiAProforma(art)}>Aggiungi</button>
             </div>
           ))}
+        </div>
+      )}
+
+      {popupImg && (
+        <div className="popup" onClick={() => setPopupImg(null)}>
+          <img src={popupImg} alt="Zoom" />
         </div>
       )}
 
@@ -164,25 +165,20 @@ function App() {
           <h3>Proforma</h3>
           <ul>
             {proforma.map((item, i) => (
-              <li key={i} style={{ textAlign: 'left' }}>
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                  onContextMenu={(e) => { e.preventDefault(); azioneSuElemento(i) }}
-                >
+              <li key={i} onContextMenu={(e) => { e.preventDefault(); mostraMenuRimozione(i) }}>
+                <div className="info">
                   <img
                     src={item.immagine}
                     alt={item.codice}
-                    style={{ width: '50px', cursor: 'pointer' }}
-                    onClick={() => apriPopup(item.immagine)}
+                    className="thumb"
+                    onClick={() => setPopupImg(item.immagine)}
                   />
-                  <div style={{ flexGrow: 1 }}>{item.codice} - € {formatPrezzo(item.prezzo)}</div>
+                  <span>{item.codice} - € {formatPrezzo(item.prezzo)}</span>
                 </div>
                 <textarea
                   placeholder="Nota su questo articolo..."
                   value={item.nota || ''}
                   onChange={(e) => aggiornaNota(i, e.target.value)}
-                  rows={2}
-                  style={{ width: '100%', marginTop: '5px' }}
                 ></textarea>
               </li>
             ))}
@@ -197,12 +193,6 @@ function App() {
           <button onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)} style={{ marginTop: '10px' }}>
             Esporta PDF
           </button>
-        </div>
-      )}
-
-      {popupImg && (
-        <div onClick={chiudiPopup} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#0008', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-          <img src={popupImg} style={{ maxWidth: '90%', maxHeight: '90%' }} alt="Zoom" />
         </div>
       )}
     </div>
