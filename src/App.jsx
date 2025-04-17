@@ -58,10 +58,51 @@ function App() {
               <li key={i}>{item.nome} - € {parseFloat(item.prezzo).toFixed(2)}</li>
             ))}
           </ul>
+          <button onClick={() => generaPDF(proforma)}>Esporta PDF</button>
         </div>
       )}
     </div>
   )
 }
+
+import jsPDF from 'jspdf'
+
+// Funzione di utilità per caricare immagini da URL
+const loadImageBase64 = async (url) => {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.readAsDataURL(blob)
+  })
+}
+
+// Generazione PDF con immagini
+const generaPDF = async (proforma) => {
+  const pdf = new jsPDF()
+  pdf.setFontSize(16)
+  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+  let y = 30
+
+  for (const item of proforma) {
+    const imgBase64 = await loadImageBase64(item.immagine)
+
+    pdf.addImage(imgBase64, 'JPEG', 10, y, 30, 30) // img a sinistra
+    pdf.setFontSize(10)
+    pdf.text(`Codice: ${item.nome}`, 45, y + 5)
+    pdf.text(`Prezzo: € ${parseFloat(item.prezzo).toFixed(2)}`, 45, y + 15)
+    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
+    y += 40
+
+    if (y > 270) {
+      pdf.addPage()
+      y = 20
+    }
+  }
+
+  pdf.save("proforma.pdf")
+}
+
 
 export default App
