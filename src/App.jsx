@@ -19,7 +19,7 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-const generaPDF = async (proforma, note) => {
+const generaPDF = async (proforma, noteGenerali) => {
   const pdf = new jsPDF()
   pdf.setFontSize(16)
   pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
@@ -33,8 +33,9 @@ const generaPDF = async (proforma, note) => {
     pdf.text(`Codice: ${item.nome}`, 45, y + 5)
     pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
     pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 25)
+    if (item.nota) pdf.text(`Nota: ${item.nota}`, 45, y + 35)
     totale += parseFloat(item.prezzo.toString().replace(",", "."))
-    y += 40
+    y += item.nota ? 50 : 40
 
     if (y > 250) {
       pdf.addPage()
@@ -42,28 +43,25 @@ const generaPDF = async (proforma, note) => {
     }
   }
 
-  // Totale
   pdf.setFontSize(12)
   pdf.text(`Totale: € ${totale.toFixed(2)}`, 140, y + 10)
 
-  // Note
-  if (note) {
+  if (noteGenerali) {
     y += 20
     pdf.setFontSize(10)
-    pdf.text("Note:", 10, y)
-    pdf.text(note, 10, y + 10)
+    pdf.text("Note generali:", 10, y)
+    pdf.text(noteGenerali, 10, y + 10)
   }
 
   pdf.save("proforma.pdf")
 }
 
-// --- Componente principale
 function App() {
   const [codice, setCodice] = useState("")
-  const [articolo, setArticolo] = useState(null)
+  const [articoliTrovati, setArticoliTrovati] = useState([])
   const [proforma, setProforma] = useState([])
   const [articoli, setArticoli] = useState([])
-  const [note, setNote] = useState("")
+  const [noteGenerali, setNoteGenerali] = useState("")
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -76,21 +74,23 @@ function App() {
   }, [])
 
   const cercaArticolo = () => {
-    const trovato = articoli.find(a =>
-      a.codice.toLowerCase().startsWith(codice.toLowerCase())
-    )
-    setArticolo(trovato || null)
+    const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
+    setArticoliTrovati(trovati)
   }
 
-  const aggiungiAProforma = () => {
-    if (articolo) {
-      setProforma([...proforma, articolo])
-    }
+  const aggiungiAProforma = (item) => {
+    setProforma([...proforma, { ...item, nota: "" }])
   }
 
   const rimuoviDaProforma = (index) => {
     const nuovaLista = [...proforma]
     nuovaLista.splice(index, 1)
+    setProforma(nuovaLista)
+  }
+
+  const aggiornaNota = (index, testo) => {
+    const nuovaLista = [...proforma]
+    nuovaLista[index].nota = testo
     setProforma(nuovaLista)
   }
 
@@ -105,13 +105,21 @@ function App() {
       />
       <button onClick={cercaArticolo}>Cerca</button>
 
-      {articolo && (
-        <div className="scheda">
-          <h2>{articolo.nome}</h2>
-          <p>{articolo.descrizione}</p>
-          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} referrerPolicy="no-referrer" />
-          <p>€ {formatPrezzo(articolo.prezzo)}</p>
-          <button onClick={aggiungiAProforma}>Aggiungi</button>
+      {articoliTrovati.length > 0 && (
+        <div className="risultati">
+          <h2>Risultati:</h2>
+          {articoliTrovati.map((art, i) => (
+            <div key={i} className="scheda">
+              <h3>{art.nome}</h3>
+              <p>{art.descrizione}</p>
+              <img src={art.immagine} alt={art.nome} style={{ maxWidth: '200px' }} />
+              <p>€ {formatPrezzo(art.prezzo)}
+                <button onClick={() => aggiungiAProforma(art)} style={{ marginLeft: '10px' }}>
+                  Aggiungi
+                </button>
+              </p>
+            </div>
+          ))}
         </div>
       )}
 
@@ -129,22 +137,29 @@ function App() {
                 {item.nome} - € {formatPrezzo(item.prezzo)}
                 <button
                   onClick={() => rimuoviDaProforma(i)}
-                  style={{ marginLeft: '10px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}
-                  title="Rimuovi"
+                  style={{ marginLeft: '10px' }}
                 >❌</button>
+                <br />
+                <textarea
+                  placeholder="Nota su questo articolo..."
+                  value={item.nota || ''}
+                  onChange={(e) => aggiornaNota(i, e.target.value)}
+                  rows={2}
+                  style={{ width: '100%', marginTop: '5px' }}
+                ></textarea>
               </li>
             ))}
           </ul>
-
           <textarea
-            placeholder="Note aggiuntive..."
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
+            placeholder="Note generali..."
+            value={noteGenerali}
+            onChange={(e) => setNoteGenerali(e.target.value)}
             rows={3}
-            style={{ width: '100%', marginTop: '10px', padding: '5px' }}
+            style={{ width: '100%', marginTop: '10px' }}
           ></textarea>
-
-          <button onClick={() => generaPDF(proforma, note)} style={{ marginTop: '10px' }}>Esporta PDF</button>
+          <button onClick={() => generaPDF(proforma, noteGenerali)} style={{ marginTop: '10px' }}>
+            Esporta PDF
+          </button>
         </div>
       )}
     </div>
