@@ -20,32 +20,46 @@ const loadImageBase64 = async (url) => {
 
 const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, resetProforma) => {
   const pdf = new jsPDF()
+
+  const logo = await loadImageBase64('/logoEM.jpg')
+  pdf.addImage(logo, 'JPEG', 10, 5, 40, 12)
+
   pdf.setFontSize(16)
-  pdf.text("Proforma Ordine Campionario", 105, 15, null, null, "center")
+  pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
 
   pdf.setFontSize(10)
-  pdf.text(`Cliente: ${cliente}`, 10, 25)
-  pdf.text(`Rappresentante: ${rappresentante}`, 10, 30)
+  pdf.text(`Cliente: ${cliente}`, 10, 30)
+  pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
 
-  let y = 40
+  let y = 45
   let totale = 0
 
   for (const item of proforma) {
     const imgBase64 = await loadImageBase64(item.immagine)
+
+    const imgW = 20
+    const imgH = 20
     pdf.setDrawColor(0)
     pdf.setLineWidth(0.1)
-    pdf.rect(10, y, 190, 35)
+    pdf.rect(10, y, 190, 25)
 
-    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, 30, 30)
-    pdf.text(`Codice: ${item.codice}`, 45, y + 8)
-    pdf.text(`Prezzo: € ${formatPrezzo(item.prezzo)}`, 45, y + 15)
-    pdf.text(`Descrizione: ${item.descrizione || ''}`, 45, y + 22)
-    if (item.nota) pdf.text(`Nota: ${item.nota}`, 45, y + 29)
+    pdf.addImage(imgBase64, 'JPEG', 12, y + 2, imgW, imgH)
+
+    // celle stile excel
+    pdf.rect(35, y, 45, 25)
+    pdf.rect(80, y, 30, 25)
+    pdf.rect(110, y, 45, 25)
+    pdf.rect(155, y, 45, 25)
+
+    pdf.text(item.codice, 36, y + 10)
+    pdf.text(`€ ${formatPrezzo(item.prezzo)}`, 81, y + 10)
+    pdf.text(item.descrizione || '', 111, y + 10)
+    if (item.nota) pdf.text(item.nota, 156, y + 10)
 
     totale += parseFloat(item.prezzo.toString().replace(",", "."))
-    y += 38
+    y += 27
 
-    if (y > 250) {
+    if (y > 260) {
       pdf.addPage()
       y = 20
     }
@@ -94,9 +108,7 @@ function App() {
 
   const cercaArticolo = () => {
     const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
-    if (trovati.length === 0) {
-      alert("Nessun articolo trovato. Controlla il codice inserito.")
-    }
+    if (trovati.length === 0) alert("Nessun articolo trovato. Controlla il codice inserito.")
     setArticoliTrovati(trovati)
   }
 
@@ -199,7 +211,10 @@ function App() {
             rows={3}
             className="note-generali"
           ></textarea>
-          <button onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)} className="btn-pdf">
+          <button
+            className="btn-pdf"
+            onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, resetProforma)}
+          >
             Esporta PDF
           </button>
         </div>
