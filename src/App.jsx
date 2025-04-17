@@ -17,6 +17,15 @@ const loadImageBase64 = async (url) => {
     reader.readAsDataURL(blob)
   })
 }
+const resizeImage = (img, maxWidth = 300) => {
+  const canvas = document.createElement('canvas')
+  const scale = maxWidth / img.width
+  canvas.width = maxWidth
+  canvas.height = img.height * scale
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+  return canvas.toDataURL('image/jpeg', 0.7)  // 0.7 = qualità
+}
 
 function App() {
   const [codice, setCodice] = useState("")
@@ -99,11 +108,12 @@ function App() {
     let totale = 0
 
     for (const item of proforma) {
-      const imgBase64 = await loadImageBase64(item.immagine)
+      
       const img = new Image()
       img.src = item.immagine
       await new Promise(res => (img.onload = res))
-
+      const imgBase64 = resizeImage(img)
+      
       const rowHeight = 26
       const col = {
         img: { x: 10, w: 30 },
@@ -155,6 +165,7 @@ function App() {
     pdf.save(nomeFile)
     
       resetProforma()
+      window.location.reload()
     } else {
       const blob = pdf.output('blob')
       const blobUrl = URL.createObjectURL(blob)
