@@ -152,7 +152,16 @@ function App() {
       resetProforma()
     } else {
       const dataUrl = pdf.output('dataurlstring')
-      window.open(dataUrl, '_blank')      
+      const win = window.open()
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Anteprima PDF</title></head>
+          <body style="margin:0;padding:0;">
+            <iframe src="${dataUrl}" style="width:100%;height:100vh;border:none;"></iframe>
+          </body>
+        </html>
+      `)              
     }
   }
 
