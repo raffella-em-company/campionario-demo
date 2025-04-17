@@ -151,21 +151,9 @@ function App() {
       pdf.save("proforma.pdf")
       resetProforma()
     } else {
-      const dataUrl = pdf.output('dataurlstring')
-      const win = window.open()
-      if (win) {
-        win.document.open()
-        win.document.write(`
-          <html>
-            <head><title>Anteprima PDF</title></head>
-            <body style="margin:0">
-              <a href="${dataUrl}" target="_blank" style="display:block;width:100%;height:100vh;text-align:center;padding-top:20vh;font-size:20px;">
-                Tocca qui per aprire l’anteprima del PDF
-              </a>
-            </body>
-          </html>
-        `)
-        win.document.close()
+      const blob = pdf.output('blob')
+      const blobUrl = URL.createObjectURL(blob)
+      window.open(blobUrl, '_blank')      
       }      
   }
 
