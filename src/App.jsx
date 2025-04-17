@@ -44,7 +44,7 @@ function App() {
         <div className="scheda">
           <h2>{articolo.nome}</h2>
           <p>{articolo.descrizione}</p>
-          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} />
+          <img src={articolo.immagine} alt={articolo.nome} style={{ maxWidth: '200px' }} referrerPolicy="no-referrer"/>
           <p>€ {parseFloat(articolo.prezzo).toFixed(2)}</p>
           <button onClick={aggiungiAProforma}>Aggiungi</button>
         </div>
