@@ -34,7 +34,7 @@ function App() {
       <h1>Campionario</h1>
       <input
         type="text"
-        placeholder="Codice articolo"
+        placeholder="9900-12127_mm25_v1"
         value={codice}
         onChange={(e) => setCodice(e.target.value)}
       />
