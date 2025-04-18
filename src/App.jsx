@@ -174,6 +174,7 @@ function App() {
   }
 
   return (
+    <>
     {isLoading && <div className="loader-pdf">Generazione PDF in corso...</div>}
     <div className="container">
       <h1>Campionario</h1>
@@ -234,6 +235,7 @@ function App() {
         </div>
       )}
     </div>
+    </>
   )
 }
 
