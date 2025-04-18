@@ -269,8 +269,9 @@ function App() {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   )
 }
-<ToastContainer />
+
 export default App
