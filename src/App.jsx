@@ -239,15 +239,15 @@ function App() {
   return (
     <div className="container">
       <h1>Campionario</h1>
-
+  
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
-
+  
       <div className="search-bar">
         <input type="text" placeholder="Codice articolo" value={codice} onChange={(e) => setCodice(e.target.value)} />
         <button onClick={cercaArticolo}>Cerca</button>
       </div>
-
+  
       {articoliTrovati.length > 0 && (
         <div className="risultati">
           <h2>Risultati:</h2>
@@ -262,13 +262,13 @@ function App() {
           ))}
         </div>
       )}
-
+  
       {popupImg && (
         <div className="popup" onClick={() => setPopupImg(null)}>
           <img src={popupImg} alt="Zoom" />
         </div>
       )}
-
+  
       {proforma.length > 0 && (
         <div className="proforma">
           <h3>Proforma</h3>
@@ -283,7 +283,7 @@ function App() {
               </li>
             ))}
           </ul>
-
+  
           <textarea
             placeholder="Note generali..."
             value={noteGenerali}
@@ -291,12 +291,11 @@ function App() {
             rows={3}
             className="note-generali"
           ></textarea>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
+  
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}>Anteprima</button>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}>Esporta PDF</button>
             <button className="btn-pdf" onClick={() => {
-              if (proforma.length === 0) return
               toast(
                 ({ closeToast }) => (
                   <div className="toast-conferma-rimozione">
@@ -309,7 +308,9 @@ function App() {
                           position: "top-right",
                           autoClose: 2000
                         })
-                      }}>Sì</button>
+                      }}>
+                        Sì
+                      </button>
                       <button className="btn-annulla" onClick={closeToast}>No</button>
                     </div>
                   </div>
@@ -322,13 +323,17 @@ function App() {
                   draggable: false
                 }
               )
-            }}>Pulisci tutto</button>
+            }}>
+              Pulisci tutto
+            </button>
           </div>
-          <ToastContainer />
         </div>
       )}
+  
+      <ToastContainer />
     </div>
   )
+  
 }
 
 export default App
