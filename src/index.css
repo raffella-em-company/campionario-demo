@@ -197,7 +197,7 @@ button:hover {
   .toast-bottoni {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 16px;
     margin-top: 10px;
   }
   
