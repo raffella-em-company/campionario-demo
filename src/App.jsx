@@ -73,8 +73,15 @@ function App() {
   }
 
   const aggiungiAProforma = (item) => {
+    const giàInserito = proforma.some(p => p.codice === item.codice)
+    if (giàInserito) {
+      alert(`⚠️ L'articolo ${item.codice} è già stato aggiunto alla proforma.`)
+      return
+    }
+  
     setProforma([...proforma, { ...item, nota: "" }])
   }
+  
 
   const mostraMenuRimozione = (index) => {
     if (window.confirm("Vuoi rimuovere questo articolo dalla proforma?")) {
@@ -117,7 +124,7 @@ function App() {
     const logoH = logoW * (logoImg.height / logoImg.width)
     pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
 
-    
+
     pdf.setFontSize(16)
     pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
     pdf.setFontSize(10)
