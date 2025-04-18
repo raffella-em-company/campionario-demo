@@ -94,10 +94,35 @@ function App() {
   
 
   const mostraMenuRimozione = (index) => {
-    if (window.confirm("Vuoi rimuovere questo articolo dalla proforma?")) {
-      rimuoviDaProforma(index)
-    }
+    toast(
+      ({ closeToast }) => (
+        <div className="toast-conferma-rimozione">
+          <p>Vuoi rimuovere questo articolo dalla proforma?</p>
+          <div className="toast-bottoni">
+            <button className="btn-rimuovi" onClick={() => {
+              rimuoviDaProforma(index)
+              closeToast()
+              toast.info("🗑️ Articolo rimosso dalla proforma", {
+                position: "top-right",
+                autoClose: 2000
+              })
+            }}>
+              Rimuovi
+            </button>
+            <button className="btn-annulla" onClick={closeToast}>Annulla</button>
+          </div>
+        </div>
+      ),
+      {
+        position: "top-center",
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: false,
+        draggable: false
+      }
+    )
   }
+  
 
   const rimuoviDaProforma = (index) => {
     const nuovaLista = [...proforma]
