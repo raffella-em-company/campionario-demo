@@ -296,6 +296,7 @@ function App() {
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}>Anteprima</button>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}>Esporta PDF</button>
             <button className="btn-pdf" onClick={() => {
+              if (proforma.length === 0) return
               toast(
                 ({ closeToast }) => (
                   <div className="toast-conferma-rimozione">
@@ -327,12 +328,12 @@ function App() {
               Pulisci tutto
             </button>
           </div>
+          <ToastContainer />
         </div>
       )}
-  
-      <ToastContainer />
     </div>
   )
+  
   
 }
 
