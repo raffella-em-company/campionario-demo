@@ -5,7 +5,6 @@ import jsPDF from 'jspdf'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'))
   return isNaN(parsed) ? '0.00' : parsed.toFixed(2)
@@ -21,7 +20,6 @@ const loadImageBase64 = async (url) => {
   })
 }
 
-// VERSIONE SICURA per Google Drive: se fallisce, ritorna direttamente il link originale
 const resizeImageSafe = async (src, maxWidth = 150) => {
   try {
     const res = await fetch(src, { mode: 'cors' })
@@ -43,15 +41,20 @@ const resizeImageSafe = async (src, maxWidth = 150) => {
     ctx.imageSmoothingQuality = 'low'
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-
-    return canvas.toDataURL('image/jpeg', 0.4)
+    return {
+      base64: canvas.toDataURL('image/jpeg', 0.4),
+      width: img.width,
+      height: img.height
+    }
   } catch (e) {
     console.warn("Errore nel ridimensionamento sicuro", e)
-    return src
+    return {
+      base64: src,
+      width: 1,
+      height: 1
+    }
   }
 }
-
-
 
 function App() {
   const [codice, setCodice] = useState("")
@@ -95,14 +98,13 @@ function App() {
       })
       return
     }
-  
+
     setProforma([...proforma, { ...item, nota: "" }])
     toast.success(`✅ Articolo ${item.codice} aggiunto con successo`, {
       position: "top-right",
       autoClose: 2000
     })
-  }  
-  
+  }
 
   const mostraMenuRimozione = (index) => {
     toast(
@@ -117,9 +119,7 @@ function App() {
                 position: "top-right",
                 autoClose: 2000
               })
-            }}>
-              Rimuovi
-            </button>
+            }}>Rimuovi</button>
             <button className="btn-annulla" onClick={closeToast}>Annulla</button>
           </div>
         </div>
@@ -133,7 +133,6 @@ function App() {
       }
     )
   }
-  
 
   const rimuoviDaProforma = (index) => {
     const nuovaLista = [...proforma]
@@ -158,7 +157,6 @@ function App() {
   const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, mode = 'preview') => {
     const pdf = new jsPDF()
 
-
     const logoPath = '/logoEM.jpg'
     const logoBase64 = await loadImageBase64(logoPath)
 
@@ -169,7 +167,6 @@ function App() {
     const logoW = 40
     const logoH = logoW * (logoImg.height / logoImg.width)
     pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
-
 
     pdf.setFontSize(16)
     pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
@@ -182,7 +179,7 @@ function App() {
 
     for (const item of proforma) {
       const { base64, width, height } = await resizeImageSafe(item.immagine)
-    
+
       const rowHeight = 26
       const col = {
         img: { x: 10, w: 30 },
@@ -191,14 +188,14 @@ function App() {
         descrizione: { x: 110, w: 50 },
         nota: { x: 160, w: 40 }
       }
-    
+
       Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
-    
+
       const imgW = col.img.w - 4
       const imgH = imgW * (height / width)
       const imgY = y + (rowHeight - imgH) / 2
       pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
-    
+
       pdf.setFontSize(9)
       pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
       pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
@@ -206,7 +203,7 @@ function App() {
       if (item.nota) {
         pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
       }
-    
+
       totale += parseFloat(item.prezzo.toString().replace(",", "."))
       y += rowHeight + 2
       if (y > 260) {
@@ -214,7 +211,6 @@ function App() {
         y = 20
       }
     }
-    
 
     pdf.setFontSize(12)
     pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
@@ -313,9 +309,7 @@ function App() {
                           position: "top-right",
                           autoClose: 2000
                         })
-                      }}>
-                        Sì
-                      </button>
+                      }}>Sì</button>
                       <button className="btn-annulla" onClick={closeToast}>No</button>
                     </div>
                   </div>
@@ -328,12 +322,12 @@ function App() {
                   draggable: false
                 }
               )
-            }}>
-              Pulisci tutto
-            </button>
+            }}>Pulisci tutto</button>
           </div>
           <ToastContainer />
-          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
