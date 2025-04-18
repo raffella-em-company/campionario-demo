@@ -93,6 +93,9 @@ function App() {
 
   const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, mode = 'preview') => {
     const pdf = new jsPDF()
+
+    // --- DEBUG: logo disattivato temporaneamente ---
+    /*
     const logoPath = '/logoEM.jpg'
     const logoBase64 = await loadImageBase64(logoPath)
 
@@ -103,6 +106,8 @@ function App() {
     const logoW = 40
     const logoH = logoW * (logoImg.height / logoImg.width)
     pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
+    */
+    // ----------------------------------------------
 
     pdf.setFontSize(16)
     pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
