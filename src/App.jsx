@@ -22,13 +22,17 @@ const loadImageBase64 = async (url) => {
 }
 
 // VERSIONE SICURA per Google Drive: se fallisce, ritorna direttamente il link originale
-const resizeImageSafe = (img, maxWidth = 150) => {
-  if (!img.complete || img.naturalWidth === 0) {
-    console.warn("Immagine non caricata, uso originale")
-    return img.src
-  }
-
+const resizeImageSafe = async (src, maxWidth = 150) => {
   try {
+    const res = await fetch(src, { mode: 'cors' })
+    const blob = await res.blob()
+    const objectURL = URL.createObjectURL(blob)
+
+    const img = new Image()
+    img.crossOrigin = 'Anonymous'
+    img.src = objectURL
+    await new Promise(resolve => (img.onload = resolve))
+
     const canvas = document.createElement('canvas')
     const scale = maxWidth / img.width
     canvas.width = maxWidth
@@ -39,11 +43,11 @@ const resizeImageSafe = (img, maxWidth = 150) => {
     ctx.imageSmoothingQuality = 'low'
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-    // JPEG molto compresso per PDF leggero
+
     return canvas.toDataURL('image/jpeg', 0.4)
   } catch (e) {
-    console.warn("Errore nel ridimensionamento (CORS?) → uso originale")
-    return img.src
+    console.warn("Errore nel ridimensionamento sicuro", e)
+    return src
   }
 }
 
@@ -176,10 +180,8 @@ function App() {
     let totale = 0
 
     for (const item of proforma) {
-      const img = new Image()
-      img.src = item.immagine
-      await new Promise(res => (img.onload = res))
-      const imgBase64 = resizeImageSafe(img)
+      const imgBase64 = await resizeImageSafe(item.immagine)
+
 
       const rowHeight = 26
       const col = {
