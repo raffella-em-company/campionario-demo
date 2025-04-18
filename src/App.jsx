@@ -299,11 +299,41 @@ function App() {
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}>Anteprima</button>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}>Esporta PDF</button>
+            <button className="btn-pdf" onClick={() => {
+              if (proforma.length === 0) return
+              toast(
+                ({ closeToast }) => (
+                  <div className="toast-conferma-rimozione">
+                    <p>Vuoi svuotare tutta la proforma?</p>
+                    <div className="toast-bottoni">
+                      <button className="btn-rimuovi" onClick={() => {
+                        resetProforma()
+                        closeToast()
+                        toast.info("🧹 Proforma svuotata", {
+                          position: "top-right",
+                          autoClose: 2000
+                        })
+                      }}>
+                        Sì
+                      </button>
+                      <button className="btn-annulla" onClick={closeToast}>No</button>
+                    </div>
+                  </div>
+                ),
+                {
+                  position: "top-center",
+                  autoClose: false,
+                  closeOnClick: false,
+                  closeButton: false,
+                  draggable: false
+                }
+              )
+            }}>
+              Pulisci tutto
+            </button>
           </div>
-        </div>
-      )}
-      <ToastContainer />
-    </div>
+          <ToastContainer />
+          </div>
   )
 }
 
