@@ -61,6 +61,7 @@ function App() {
   const [cliente, setCliente] = useState("")
   const [rappresentante, setRappresentante] = useState("")
   const [popupImg, setPopupImg] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -121,65 +122,68 @@ function App() {
   }
 
   const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, mode = 'preview') => {
-    const pdf = new jsPDF()
-    const logoBase64 = await loadImageBase64('/logoEM.jpg')
-    const img = new Image()
-    img.src = '/logoEM.jpg'
-    await new Promise(res => (img.onload = res))
-    const logoW = 40
-    const logoH = logoW * (img.height / img.width)
-    pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
-    pdf.setFontSize(16)
-    pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
-    pdf.setFontSize(10)
-    pdf.text(`Cliente: ${cliente}`, 10, 30)
-    pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
+    setIsLoading(true)
+    try {
+      const pdf = new jsPDF()
+      const logoBase64 = await loadImageBase64('/logoEM.jpg')
+      const img = new Image()
+      img.src = '/logoEM.jpg'
+      await new Promise(res => (img.onload = res))
+      const logoW = 40
+      const logoH = logoW * (img.height / img.width)
+      pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
+      pdf.setFontSize(16)
+      pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+      pdf.setFontSize(10)
+      pdf.text(`Cliente: ${cliente}`, 10, 30)
+      pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
 
-    let y = 45, totale = 0
-    for (const item of proforma) {
-      const { base64, width, height } = await resizeImageSafe(item.immagine)
-      const rowHeight = 26
-      const col = { img: { x: 10, w: 30 }, codice: { x: 40, w: 40 }, prezzo: { x: 80, w: 30 }, descrizione: { x: 110, w: 50 }, nota: { x: 160, w: 40 } }
-      Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
-      const maxW = col.img.w - 4
-      const maxH = rowHeight - 4
-      let imgW = maxW
-      let imgH = (imgW * height) / width
-      
-      if (imgH > maxH) {
-        imgH = maxH
-        imgW = (imgH * width) / height
-      }      
-      const imgY = y + (rowHeight - imgH) / 2
-      pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)      
-      pdf.setFontSize(9)
-      pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
-      pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
-      pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
-      if (item.nota) pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
-      totale += parseFloat(item.prezzo.toString().replace(",", "."))
-      y += rowHeight + 2
-      if (y > 260) { pdf.addPage(); y = 20 }
-    }
-
-    pdf.setFontSize(12)
-    pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
-    if (noteGenerali) { y += 15; pdf.setFontSize(10); pdf.text("Note generali:", 10, y); pdf.text(noteGenerali, 10, y + 6) }
-
-    if (mode === 'export') {
-      const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
-      pdf.save(nomeFile); resetProforma(); window.location.reload()
-    } else {
-      const blobUrl = URL.createObjectURL(pdf.output('blob'))
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.target = '_blank'
-      link.click()      
+      let y = 45, totale = 0
+      for (const item of proforma) {
+        const { base64, width, height } = await resizeImageSafe(item.immagine)
+        const rowHeight = 26
+        const col = { img: { x: 10, w: 30 }, codice: { x: 40, w: 40 }, prezzo: { x: 80, w: 30 }, descrizione: { x: 110, w: 50 }, nota: { x: 160, w: 40 } }
+        Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
+        const maxW = col.img.w - 4
+        const maxH = rowHeight - 4
+        let imgW = maxW
+        let imgH = (imgW * height) / width
+        if (imgH > maxH) {
+          imgH = maxH
+          imgW = (imgH * width) / height
+        }
+        const imgY = y + (rowHeight - imgH) / 2
+        pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
+        pdf.setFontSize(9)
+        pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
+        pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
+        pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
+        if (item.nota) pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
+        totale += parseFloat(item.prezzo.toString().replace(",", "."))
+        y += rowHeight + 2
+        if (y > 260) { pdf.addPage(); y = 20 }
+      }
+      pdf.setFontSize(12)
+      pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
+      if (noteGenerali) { y += 15; pdf.setFontSize(10); pdf.text("Note generali:", 10, y); pdf.text(noteGenerali, 10, y + 6) }
+      if (mode === 'export') {
+        const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
+        pdf.save(nomeFile)
+      } else {
+        const blobUrl = URL.createObjectURL(pdf.output('blob'))
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.target = '_blank'
+        link.click()
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="container">
+      {isLoading && <div className="loader-pdf">Generazione PDF in corso...</div>}
       <h1>Campionario</h1>
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />

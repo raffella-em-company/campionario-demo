@@ -235,5 +235,14 @@ button:hover {
   .btn-pdf:hover {
     background-color: #666;
   }
-  
+  .loader-pdf {
+    margin: 10px 0;
+    padding: 10px;
+    background: #ffeaa7;
+    color: #2d3436;
+    border: 1px solid #fdcb6e;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+  }  
 }
