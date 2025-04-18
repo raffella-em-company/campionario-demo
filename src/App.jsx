@@ -22,7 +22,7 @@ const loadImageBase64 = async (url) => {
 }
 
 // VERSIONE SICURA per Google Drive: se fallisce, ritorna direttamente il link originale
-const resizeImageSafe = (img, maxWidth = 300) => {
+const resizeImageSafe = (img, maxWidth = 150) => {
   if (!img.complete || img.naturalWidth === 0) {
     console.warn("Immagine non caricata, uso originale")
     return img.src
@@ -33,14 +33,20 @@ const resizeImageSafe = (img, maxWidth = 300) => {
     const scale = maxWidth / img.width
     canvas.width = maxWidth
     canvas.height = img.height * scale
+
     const ctx = canvas.getContext('2d')
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'low'
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL('image/jpeg', 0.7)
+
+    // JPEG molto compresso per PDF leggero
+    return canvas.toDataURL('image/jpeg', 0.4)
   } catch (e) {
     console.warn("Errore nel ridimensionamento (CORS?) → uso originale")
     return img.src
   }
 }
+
 
 function App() {
   const [codice, setCodice] = useState("")
