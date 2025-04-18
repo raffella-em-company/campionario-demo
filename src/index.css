@@ -236,13 +236,14 @@ button:hover {
     background-color: #666;
   }
   .loader-pdf {
-    margin: 10px 0;
+    margin-bottom: 15px;
     padding: 10px;
-    background: #ffeaa7;
-    color: #2d3436;
-    border: 1px solid #fdcb6e;
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fcd34d;
     border-radius: 6px;
     font-weight: bold;
     text-align: center;
+    font-size: 1rem;
   }  
 }
