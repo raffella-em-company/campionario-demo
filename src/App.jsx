@@ -174,8 +174,8 @@ function App() {
   }
 
   return (
+    {isLoading && <div className="loader-pdf">Generazione PDF in corso...</div>}
     <div className="container">
-      {isLoading && <div className="loader-pdf">Generazione PDF in corso...</div>}
       <h1>Campionario</h1>
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
