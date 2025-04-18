@@ -4,7 +4,7 @@ import Papa from 'papaparse'
 import jsPDF from 'jspdf'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { FaEye, FaFilePdf, FaPlus, FaTrash } from "react-icons/fa"
+import { FaFilePdf, FaPlus, FaTrash } from "react-icons/fa"
 
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'))
@@ -121,7 +121,7 @@ function App() {
     setProforma([]); setNoteGenerali(""); setCliente(""); setRappresentante(""); localStorage.removeItem("proforma")
   }
 
-  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante, mode = 'preview') => {
+  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
     setIsLoading(true)
     try {
       const pdf = new jsPDF()
@@ -166,16 +166,8 @@ function App() {
       pdf.setFontSize(12)
       pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
       if (noteGenerali) { y += 15; pdf.setFontSize(10); pdf.text("Note generali:", 10, y); pdf.text(noteGenerali, 10, y + 6) }
-      if (mode === 'export') {
-        const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
-        pdf.save(nomeFile)
-      } else {
-        const blobUrl = URL.createObjectURL(pdf.output('blob'))
-        const link = document.createElement('a')
-        link.href = blobUrl
-        link.target = '_blank'
-        link.click()
-      }
+      const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
+      pdf.save(nomeFile)
     } finally {
       setIsLoading(false)
     }
@@ -222,8 +214,7 @@ function App() {
           </ul>
           <textarea placeholder="Note generali..." value={noteGenerali} onChange={(e) => setNoteGenerali(e.target.value)} rows={3} className="note-generali"></textarea>
           <div className="bottoni-proforma">
-            <button className="btn-icon" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}><FaEye /></button>
-            <button className="btn-icon" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}><FaFilePdf /></button>
+            <button className="btn-icon" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}><FaFilePdf /></button>
             <button className="btn-icon btn-danger" onClick={() => {
               if (proforma.length === 0) return
               toast(({ closeToast }) => (
