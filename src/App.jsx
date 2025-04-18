@@ -17,6 +17,7 @@ const loadImageBase64 = async (url) => {
     reader.readAsDataURL(blob)
   })
 }
+
 const resizeImage = (img, maxWidth = 300) => {
   const canvas = document.createElement('canvas')
   const scale = maxWidth / img.width
@@ -24,7 +25,7 @@ const resizeImage = (img, maxWidth = 300) => {
   canvas.height = img.height * scale
   const ctx = canvas.getContext('2d')
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-  return canvas.toDataURL('image/jpeg', 0.7)  // 0.7 = qualità
+  return canvas.toDataURL('image/jpeg', 0.7)
 }
 
 function App() {
@@ -65,8 +66,9 @@ function App() {
   }
 
   const mostraMenuRimozione = (index) => {
-    const conferma = window.confirm("Vuoi rimuovere questo articolo dalla proforma?")
-    if (conferma) rimuoviDaProforma(index)
+    if (window.confirm("Vuoi rimuovere questo articolo dalla proforma?")) {
+      rimuoviDaProforma(index)
+    }
   }
 
   const rimuoviDaProforma = (index) => {
@@ -84,6 +86,8 @@ function App() {
   const resetProforma = () => {
     setProforma([])
     setNoteGenerali("")
+    setCliente("")
+    setRappresentante("")
     localStorage.removeItem("proforma")
   }
 
@@ -91,9 +95,11 @@ function App() {
     const pdf = new jsPDF()
     const logoPath = '/logoEM.jpg'
     const logoBase64 = await loadImageBase64(logoPath)
+
     const logoImg = new Image()
     logoImg.src = logoPath
     await new Promise(res => (logoImg.onload = res))
+
     const logoW = 40
     const logoH = logoW * (logoImg.height / logoImg.width)
     pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
@@ -108,12 +114,11 @@ function App() {
     let totale = 0
 
     for (const item of proforma) {
-      
       const img = new Image()
       img.src = item.immagine
       await new Promise(res => (img.onload = res))
       const imgBase64 = resizeImage(img)
-      
+
       const rowHeight = 26
       const col = {
         img: { x: 10, w: 30 },
@@ -159,23 +164,22 @@ function App() {
 
     if (mode === 'export') {
       const nomeFile = cliente
-      ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf`
-      : 'proforma-senza-nome.pdf'
-    
-    pdf.save(nomeFile)
-    
+        ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf`
+        : 'proforma-senza-nome.pdf'
+      pdf.save(nomeFile)
       resetProforma()
       window.location.reload()
     } else {
       const blob = pdf.output('blob')
       const blobUrl = URL.createObjectURL(blob)
-      window.open(blobUrl, '_blank')      
-      }      
+      window.open(blobUrl, '_blank')
+    }
   }
 
   return (
     <div className="container">
       <h1>Campionario</h1>
+
       <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
       <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
 
@@ -219,6 +223,7 @@ function App() {
               </li>
             ))}
           </ul>
+
           <textarea
             placeholder="Note generali..."
             value={noteGenerali}
@@ -226,6 +231,7 @@ function App() {
             rows={3}
             className="note-generali"
           ></textarea>
+
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'preview')}>Anteprima</button>
             <button className="btn-pdf" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante, 'export')}>Esporta PDF</button>
