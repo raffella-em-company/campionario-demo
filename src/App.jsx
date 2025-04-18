@@ -141,10 +141,17 @@ function App() {
       const rowHeight = 26
       const col = { img: { x: 10, w: 30 }, codice: { x: 40, w: 40 }, prezzo: { x: 80, w: 30 }, descrizione: { x: 110, w: 50 }, nota: { x: 160, w: 40 } }
       Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
-      const imgW = col.img.w - 4
-      const imgH = imgW * (height / width)
+      const maxW = col.img.w - 4
+      const maxH = rowHeight - 4
+      let imgW = maxW
+      let imgH = (imgW * height) / width
+      
+      if (imgH > maxH) {
+        imgH = maxH
+        imgW = (imgH * width) / height
+      }      
       const imgY = y + (rowHeight - imgH) / 2
-      pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
+      pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)      
       pdf.setFontSize(9)
       pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
       pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
@@ -164,7 +171,10 @@ function App() {
       pdf.save(nomeFile); resetProforma(); window.location.reload()
     } else {
       const blobUrl = URL.createObjectURL(pdf.output('blob'))
-      window.open(blobUrl, '_blank')
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.target = '_blank'
+      link.click()      
     }
   }
 
