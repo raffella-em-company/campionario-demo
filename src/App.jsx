@@ -175,66 +175,148 @@ function App() {
 
   return (
     <>
-    {isLoading && <div className="loader-pdf">Generazione PDF in corso...</div>}
-    <div className="container">
-      <h1>Campionario</h1>
-      <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
-      <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
-      <div className="search-bar">
-        <input type="text" placeholder="Codice articolo" value={codice} onChange={(e) => setCodice(e.target.value)} />
-        <button onClick={cercaArticolo}>Cerca</button>
-      </div>
-      {articoliTrovati.length > 0 && (
-        <div className="risultati">
-          <h2>Risultati:</h2>
-          {articoliTrovati.map((art, i) => (
-            <div key={i} className="scheda">
-              <h3>{art.codice}</h3>
-              <p>{art.descrizione}</p>
-              <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
-              <p>€ {formatPrezzo(art.prezzo)}</p>
-              <button className="btn-add" onClick={() => aggiungiAProforma(art)}><FaPlus /></button>
-            </div>
-          ))}
-        </div>
+      {isLoading && (
+        <div className="loader-pdf">Generazione PDF in corso...</div>
       )}
-      {popupImg && (<div className="popup" onClick={() => setPopupImg(null)}><img src={popupImg} alt="Zoom" /></div>)}
-      {proforma.length > 0 && (
-        <div className="proforma">
-          <h3>Proforma</h3>
-          <ul>
-            {proforma.map((item, i) => (
-              <li key={i} onContextMenu={(e) => { e.preventDefault(); mostraMenuRimozione(i) }}>
-                <div className="info">
-                  <img src={item.immagine} alt={item.codice} className="thumb" onClick={() => setPopupImg(item.immagine)} />
-                  <span>{item.codice} - € {formatPrezzo(item.prezzo)}</span>
-                </div>
-                <textarea placeholder="Nota su questo articolo..." value={item.nota || ''} onChange={(e) => aggiornaNota(i, e.target.value)}></textarea>
-              </li>
+  
+      <div className="container">
+        <h1>Campionario</h1>
+        <input
+          type="text"
+          placeholder="Cliente"
+          value={cliente}
+          onChange={(e) => setCliente(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Rappresentante"
+          value={rappresentante}
+          onChange={(e) => setRappresentante(e.target.value)}
+        />
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Codice articolo"
+            value={codice}
+            onChange={(e) => setCodice(e.target.value)}
+          />
+          <button onClick={cercaArticolo}>Cerca</button>
+        </div>
+  
+        {articoliTrovati.length > 0 && (
+          <div className="risultati">
+            <h2>Risultati:</h2>
+            {articoliTrovati.map((art, i) => (
+              <div key={i} className="scheda">
+                <h3>{art.codice}</h3>
+                <p>{art.descrizione}</p>
+                <img
+                  src={art.immagine}
+                  alt={art.codice}
+                  onClick={() => setPopupImg(art.immagine)}
+                />
+                <p>€ {formatPrezzo(art.prezzo)}</p>
+                <button className="btn-add" onClick={() => aggiungiAProforma(art)}>
+                  <FaPlus />
+                </button>
+              </div>
             ))}
-          </ul>
-          <textarea placeholder="Note generali..." value={noteGenerali} onChange={(e) => setNoteGenerali(e.target.value)} rows={3} className="note-generali"></textarea>
-          <div className="bottoni-proforma">
-            <button className="btn-icon" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}><FaFilePdf /></button>
-            <button className="btn-icon btn-danger" onClick={() => {
-              if (proforma.length === 0) return
-              toast(({ closeToast }) => (
-                <div className="toast-conferma-rimozione">
-                  <p>Vuoi svuotare tutta la proforma?</p>
-                  <div className="toast-bottoni">
-                    <button className="btn-rimuovi" onClick={() => { resetProforma(); closeToast(); toast.info("🧹 Proforma svuotata", { position: "top-right", autoClose: 2000 }) }}>Sì</button>
-                    <button className="btn-annulla" onClick={closeToast}>No</button>
-                  </div>
-                </div>
-              ), {
-                position: "top-center", autoClose: false, closeOnClick: false, closeButton: false, draggable: false
-              })
-            }}><FaTrash /></button>
           </div>
-          <ToastContainer />
-        </div>
-      )}
-    </div>
+        )}
+  
+        {popupImg && (
+          <div className="popup" onClick={() => setPopupImg(null)}>
+            <img src={popupImg} alt="Zoom" />
+          </div>
+        )}
+  
+        {proforma.length > 0 && (
+          <div className="proforma">
+            <h3>Proforma</h3>
+            <ul>
+              {proforma.map((item, i) => (
+                <li
+                  key={i}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    mostraMenuRimozione(i)
+                  }}
+                >
+                  <div className="info">
+                    <img
+                      src={item.immagine}
+                      alt={item.codice}
+                      className="thumb"
+                      onClick={() => setPopupImg(item.immagine)}
+                    />
+                    <span>
+                      {item.codice} - € {formatPrezzo(item.prezzo)}
+                    </span>
+                  </div>
+                  <textarea
+                    placeholder="Nota su questo articolo..."
+                    value={item.nota || ''}
+                    onChange={(e) => aggiornaNota(i, e.target.value)}
+                  ></textarea>
+                </li>
+              ))}
+            </ul>
+            <textarea
+              placeholder="Note generali..."
+              value={noteGenerali}
+              onChange={(e) => setNoteGenerali(e.target.value)}
+              rows={3}
+              className="note-generali"
+            ></textarea>
+            <div className="bottoni-proforma">
+              <button
+                className="btn-icon"
+                onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}
+              >
+                <FaFilePdf />
+              </button>
+              <button
+                className="btn-icon btn-danger"
+                onClick={() => {
+                  if (proforma.length === 0) return
+                  toast(({ closeToast }) => (
+                    <div className="toast-conferma-rimozione">
+                      <p>Vuoi svuotare tutta la proforma?</p>
+                      <div className="toast-bottoni">
+                        <button
+                          className="btn-rimuovi"
+                          onClick={() => {
+                            resetProforma()
+                            closeToast()
+                            toast.info("🧹 Proforma svuotata", {
+                              position: "top-right",
+                              autoClose: 2000,
+                            })
+                          }}
+                        >
+                          Sì
+                        </button>
+                        <button className="btn-annulla" onClick={closeToast}>
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  ), {
+                    position: "top-center",
+                    autoClose: false,
+                    closeOnClick: false,
+                    closeButton: false,
+                    draggable: false,
+                  })
+                }}
+              >
+                <FaTrash />
+              </button>
+            </div>
+            <ToastContainer />
+          </div>
+        )}
+      </div>
     </>
   )
 }
