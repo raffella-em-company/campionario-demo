@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import './index.css'
 import Papa from 'papaparse'
 import jsPDF from 'jspdf'
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+
 
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'))
@@ -75,12 +78,19 @@ function App() {
   const aggiungiAProforma = (item) => {
     const giàInserito = proforma.some(p => p.codice === item.codice)
     if (giàInserito) {
-      alert(`⚠️ L'articolo ${item.codice} è già stato aggiunto alla proforma.`)
+      toast.warning(`⚠️ L'articolo ${item.codice} è già nella proforma`, {
+        position: "top-right",
+        autoClose: 3000
+      })
       return
     }
   
     setProforma([...proforma, { ...item, nota: "" }])
-  }
+    toast.success(`✅ Articolo ${item.codice} aggiunto con successo`, {
+      position: "top-right",
+      autoClose: 2000
+    })
+  }  
   
 
   const mostraMenuRimozione = (index) => {
@@ -262,5 +272,5 @@ function App() {
     </div>
   )
 }
-
+<ToastContainer />
 export default App
