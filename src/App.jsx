@@ -70,7 +70,7 @@ function App() {
 
   // --- Caricamento CSV ---
   useEffect(() => {
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/.../pub?output=csv';
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/18avHrTcAt4oF6D1aQGskepGRThTFU13Wtg9SPS6epnk/edit?gid=544521169#gid=544521169';
     Papa.parse(csvUrl, {
       download: true,
       header: true,
