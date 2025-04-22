@@ -87,12 +87,6 @@ function App() {
     }
   }
 
-  const cercaArticolo = () => {
-    const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
-    if (trovati.length === 0) alert("Nessun articolo trovato. Controlla il codice inserito.")
-    setArticoliTrovati(trovati)
-  }
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser?.email?.endsWith('@emcompany.it')) {
@@ -111,13 +105,9 @@ function App() {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
       download: true,
       header: true,
-      complete: (results) => {
-        const validRows = results.data.filter(row => row.Codice)
-        setArticoli(validRows)
-      }
+      complete: (results) => setArticoli(results.data)
     })
   }, [])
-  
 
   useEffect(() => {
     localStorage.setItem('proforma', JSON.stringify(proforma))
