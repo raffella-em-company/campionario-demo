@@ -76,15 +76,8 @@ function App() {
     }
   }
 
-  const logout = async () => {
-    try {
-      await signOut(auth)
-      setUser(null)
-      toast.info("Logout effettuato con successo", { position: "top-center" })
-    } catch (err) {
-      console.error("Errore nel logout:", err)
-      toast.error("Errore durante il logout", { position: "top-center" })
-    }
+  const logout = () => {
+    signOut(auth)
   }
 
   useEffect(() => {
@@ -94,12 +87,11 @@ function App() {
       } else if (currentUser) {
         signOut(auth)
         toast.error("Accesso consentito solo con email @emcompany.it", { position: "top-center" })
-      } else {
-        setUser(null)
       }
     })
     return () => unsubscribe()
   }, [])
+  
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -112,6 +104,117 @@ function App() {
   useEffect(() => {
     localStorage.setItem('proforma', JSON.stringify(proforma))
   }, [proforma])
+
+  const cercaArticolo = () => {
+    const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
+    if (trovati.length === 0) alert("Nessun articolo trovato. Controlla il codice inserito.")
+    setArticoliTrovati(trovati)
+  }
+
+  const aggiungiAProforma = (item) => {
+    const giàInserito = proforma.some(p => p.codice === item.codice)
+    if (giàInserito) {
+      toast.warning(`⚠️ L'articolo ${item.codice} è già nella proforma`, { position: "top-right", autoClose: 3000 })
+      return
+    }
+    setProforma([...proforma, { ...item, nota: "" }])
+    toast.success(`✅ Articolo ${item.codice} aggiunto con successo`, { position: "top-right", autoClose: 2000 })
+  }
+
+  const mostraMenuRimozione = (index) => {
+    toast(({ closeToast }) => (
+      <div className="toast-conferma-rimozione">
+        <p>Vuoi rimuovere questo articolo dalla proforma?</p>
+        <div className="toast-bottoni">
+          <button className="btn-rimuovi" onClick={() => { rimuoviDaProforma(index); closeToast(); toast.info("🗑️ Articolo rimosso", { position: "top-right", autoClose: 2000 }) }}>Sì</button>
+          <button className="btn-annulla" onClick={closeToast}>No</button>
+        </div>
+      </div>
+    ), {
+      position: "top-center", autoClose: false, closeOnClick: false, closeButton: false, draggable: false
+    })
+  }
+
+  const rimuoviDaProforma = (index) => {
+    const nuovaLista = [...proforma]
+    nuovaLista.splice(index, 1)
+    setProforma(nuovaLista)
+  }
+
+  const aggiornaNota = (index, testo) => {
+    const nuovaLista = [...proforma]
+    nuovaLista[index].nota = testo
+    setProforma(nuovaLista)
+  }
+
+  const resetProforma = () => {
+    setProforma([])
+    setNoteGenerali("")
+    setCliente("")
+    setRappresentante("")
+    localStorage.removeItem("proforma")
+  }
+
+  const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
+    setIsLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 50))
+    try {
+      const pdf = new jsPDF()
+      const logoBase64 = await loadImageBase64('/logoEM.jpg')
+      const img = new Image()
+      img.src = '/logoEM.jpg'
+      await new Promise(res => (img.onload = res))
+      const logoW = 40
+      const logoH = logoW * (img.height / img.width)
+      pdf.addImage(logoBase64, 'JPEG', 10, 5, logoW, logoH)
+      pdf.setFontSize(16)
+      pdf.text("Proforma Ordine Campionario", 105, 20, null, null, "center")
+      pdf.setFontSize(10)
+      pdf.text(`Cliente: ${cliente}`, 10, 30)
+      pdf.text(`Rappresentante: ${rappresentante}`, 10, 36)
+
+      let y = 45, totale = 0
+      for (const item of proforma) {
+        const { base64, width, height } = await resizeImageSafe(item.immagine)
+        const rowHeight = 26
+        const col = { img: { x: 10, w: 30 }, codice: { x: 40, w: 40 }, prezzo: { x: 80, w: 30 }, descrizione: { x: 110, w: 50 }, nota: { x: 160, w: 40 } }
+        Object.values(col).forEach(c => pdf.rect(c.x, y, c.w, rowHeight))
+        const maxW = col.img.w - 4
+        const maxH = rowHeight - 4
+        let imgW = maxW
+        let imgH = (imgW * height) / width
+        if (imgH > maxH) {
+          imgH = maxH
+          imgW = (imgH * width) / height
+        }
+        const imgY = y + (rowHeight - imgH) / 2
+        pdf.addImage(base64, 'JPEG', col.img.x + 2, imgY, imgW, imgH)
+        pdf.setFontSize(9)
+        pdf.text(item.codice, col.codice.x + col.codice.w / 2, y + 15, { align: "center" })
+        pdf.text(`€ ${formatPrezzo(item.prezzo)}`, col.prezzo.x + col.prezzo.w / 2, y + 15, { align: "center" })
+        pdf.text(item.descrizione || '', col.descrizione.x + col.descrizione.w / 2, y + 15, { align: "center", maxWidth: col.descrizione.w - 4 })
+        if (item.nota) pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
+        totale += parseFloat(item.prezzo.toString().replace(",", "."))
+        y += rowHeight + 2
+        if (y > 260) {
+          pdf.addPage()
+          y = 20
+        }
+      }
+      pdf.setFontSize(12)
+      pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
+      if (noteGenerali) {
+        y += 15
+        pdf.setFontSize(10)
+        pdf.text("Note generali:", 10, y)
+        pdf.text(noteGenerali, 10, y + 6)
+      }
+      const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
+      pdf.save(nomeFile)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <>
