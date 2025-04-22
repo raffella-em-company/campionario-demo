@@ -70,30 +70,30 @@ function App() {
 
   // --- Caricamento CSV ---
   useEffect(() => {
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pubhtml';
-    Papa.parse(csvUrl, {
-      download: true,
-      header: true,
-      complete: ({ data }) => {
-        // scarta righe senza Codice e mappa i campi
-        const mapped = data
-          .filter(r => r.Codice && r.Codice.trim() !== '')
-          .map(r => ({
-            codice: r.Codice,
-            descrizione: r.Descrizione,
-            unitaMisura: r['Unità di misura'],
-            moq: r['M.O.Q.'],
-            prezzoCampione: r['Prezzo Campione'],
-            prezzoProduzione: r['Prezzo Produzione'],
-            immagine: r.Immagine
-          }));
-        setArticoli(mapped);
-      },
-      error: (err) => {
-        toast.error('Errore caricamento articoli: ' + err.message, { position: 'top-right' });
+    Papa.parse(
+      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv',
+      {
+        download: true,
+        header: true,
+        complete: ({ data }) => {
+          const mapped = data
+            .filter(r => r.Codice && r.Codice.trim() !== '')
+            .map(r => ({
+              codice: r.Codice,
+              descrizione: r.Descrizione,
+              unitaMisura: r['Unità di misura'],
+              moq: r['M.O.Q.'],
+              prezzoCampione: r['Prezzo Campione'],
+              prezzoProduzione: r['Prezzo Produzione'],
+              immagine: r.Immagine
+            }));
+          setArticoli(mapped);
+        },
+        error: err => toast.error('Errore caricamento: '+err.message)
       }
-    });
+    );
   }, []);
+  
 
   // --- Autenticazione Google ---
   const provider = new GoogleAuthProvider();
