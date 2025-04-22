@@ -34,7 +34,7 @@ textarea {
 }
 
 button {
-  background-color: #575757;
+  background-color: #97ffce;
   color: white;
   padding: 10px 14px;
   border: none;
@@ -46,7 +46,7 @@ button {
 }
 
 button:hover {
-  background-color: #484848;
+  background-color: #69b390;
 }
 
 .search-bar {
@@ -163,45 +163,24 @@ button:hover {
   .scheda img {
     flex-shrink: 0;
   }
-  .tabella-preview {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    font-size: 0.95rem;
-  }
 
-  .tabella-preview th,
-  .tabella-preview td {
-    border: 1px solid #ccc;
-    padding: 6px 10px;
-    text-align: center;
-    vertical-align: middle;
-  }
-  
-  .tabella-preview img {
-    width: auto;
-    height: 50px;
-    object-fit: contain;
-    display: block;
-    margin: auto;
-  }
   .toast-conferma-rimozione {
     font-family: inherit;
     font-size: 14px;
   }
-  
+
   .toast-conferma-rimozione p {
     margin: 0;
     font-weight: 500;
   }
-  
+
   .toast-bottoni {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 10px;
   }
-  
+
   .toast-bottoni button {
     display: flex;
     padding: 5px 12px;
@@ -210,19 +189,21 @@ button:hover {
     cursor: pointer;
     font-weight: 500;
   }
-  
+
   .toast-bottoni .btn-rimuovi {
     background: #dc3545;
     color: white;
   }
-  
+
   .toast-bottoni .btn-annulla {
     background: #6c757d;
     color: white;
   }
+
   .proforma button {
     display: inline-block !important;
-  }  
+  }
+
   .btn-pdf {
     padding: 10px 20px;
     font-weight: bold;
@@ -232,9 +213,11 @@ button:hover {
     border-radius: 6px;
     cursor: pointer;
   }
+
   .btn-pdf:hover {
     background-color: #666;
   }
+
   .loader-overlay {
     position: fixed;
     top: 0;
@@ -249,7 +232,8 @@ button:hover {
     font-weight: bold;
     color: #333;
     z-index: 1000;
-  } 
+  }
+
   .loader-pdf {
     position: fixed;
     top: 0;
@@ -264,6 +248,5 @@ button:hover {
     align-items: center;
     font-size: 1.8rem;
     font-weight: bold;
-  }  
-   
+  }
 }
