@@ -60,14 +60,15 @@ function App() {
   const [codice, setCodice] = useState('');
   const [proforma, setProforma] = useState(saved.proforma || []);
   const [cliente, setCliente] = useState(saved.cliente || '');
-  const [rappresentante, setRappresentante] = useState(saved.rappresentante || '');
+  const [banca, setBanca] = useState(saved.banca || '');
+  const [corriere, setCorriere] = useState(saved.corriere || '');
   const [noteGenerali, setNoteGenerali] = useState(saved.noteGenerali || '');
   const [popupImg, setPopupImg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('appState', JSON.stringify({ proforma, cliente, rappresentante, noteGenerali }));
-  }, [proforma, cliente, rappresentante, noteGenerali]);
+    localStorage.setItem('appState', JSON.stringify({ proforma, cliente, banca, corriere, noteGenerali }));
+  }, [proforma, cliente, banca, corriere, noteGenerali]);  
 
   // --- Caricamento CSV ---
   useEffect(() => {
@@ -131,7 +132,7 @@ function App() {
   };
 
   const resetProforma = () => {
-    setProforma([]); setCliente(''); setRappresentante(''); setNoteGenerali('');
+    setProforma([]); setCliente(''); setBanca(''); setCorriere(''); setNoteGenerali('');
     toast.info('Proforma svuotata', { position: 'top-right' });
   };
 
@@ -152,11 +153,19 @@ function App() {
         pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
   
         // 2) INTESTAZIONE PROFORMA
-        pdf.setFontSize(14);
-        pdf.text('Proforma Ordine Campionario', pw / 2, 20, { align: 'center' });
         pdf.setFontSize(10);
-        pdf.text(`Cliente: ${cliente}`, 10, logoH + 10);
-        pdf.text(`Rappresentante: ${rappresentante}`, 10, logoH + 16);
+        const infoStartY = logoH + 10;
+        const rappresentanteNome = user.displayName || '';
+        const rappresentanteEmail = user.email || '';
+        pdf.text(`Cliente: ${cliente}`, 10, infoStartY);
+        pdf.text(`Banca: ${banca}`, 10, infoStartY + 6);
+        pdf.text(`Data: ${new Date().toLocaleDateString()}`, 10, infoStartY + 12);
+        pdf.text(`Corriere: ${corriere}`, 10, infoStartY + 18);
+        pdf.setFont(undefined, 'bold');
+        pdf.text(`RAPPRESENTANTE:`, pw - 70, infoStartY);
+        pdf.text(rappresentanteNome, pw - 70, infoStartY + 6);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(rappresentanteEmail, pw - 70, infoStartY + 12);
   
         // 3) GRIGLIA EXCEL-STYLE
         const tableX = 10;
@@ -264,8 +273,9 @@ function App() {
             <button onClick={logout} className="btn-logout">Logout</button>
 
             <div className="clienti-inputs">
-              <input type="text" placeholder="Cliente" value={cliente} onChange={e => setCliente(e.target.value)} />
-              <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={e => setRappresentante(e.target.value)} />
+            <input type="text" placeholder="Cliente" value={cliente} onChange={e => setCliente(e.target.value)} />
+            <input type="text" placeholder="Banca" value={banca} onChange={e => setBanca(e.target.value)} />
+            <input type="text" placeholder="Corriere" value={corriere} onChange={e => setCorriere(e.target.value)} />
             </div>
 
             <div className="search-bar">
