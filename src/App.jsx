@@ -41,7 +41,11 @@ const resizeImageSafe = async (src, maxWidth = 150) => {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'low';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return { base64: canvas.toDataURL('image/jpeg', 0.4), width: img.width, height: img.height };
+    return {
+      base64: canvas.toDataURL('image/jpeg', 1.0),
+      width: img.width,
+      height: img.height
+    };    
   } catch (e) {
     console.warn('resizeImageSafe error', e);
     return { base64: src, width: 1, height: 1 };
