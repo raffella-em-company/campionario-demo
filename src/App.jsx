@@ -5,9 +5,8 @@ import jsPDF from 'jspdf'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { FaFilePdf, FaPlus, FaTrash } from "react-icons/fa"
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth } from './firebase-config';
-
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth"
+import { auth } from './firebase-config'
 
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'))
@@ -53,6 +52,9 @@ const resizeImageSafe = async (src, maxWidth = 150) => {
 }
 
 function App() {
+  const provider = new GoogleAuthProvider()
+  const [user, setUser] = useState(null)
+
   const [codice, setCodice] = useState("")
   const [articoliTrovati, setArticoliTrovati] = useState([])
   const [proforma, setProforma] = useState(() => {
@@ -65,6 +67,25 @@ function App() {
   const [rappresentante, setRappresentante] = useState("")
   const [popupImg, setPopupImg] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  const loginGoogle = async () => {
+    try {
+      await signInWithPopup(auth, provider)
+    } catch (error) {
+      console.error("Errore login:", error)
+    }
+  }
+
+  const logout = () => {
+    signOut(auth)
+  }
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
+    return () => unsubscribe()
+  }, [])
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
@@ -121,7 +142,11 @@ function App() {
   }
 
   const resetProforma = () => {
-    setProforma([]); setNoteGenerali(""); setCliente(""); setRappresentante(""); localStorage.removeItem("proforma")
+    setProforma([])
+    setNoteGenerali("")
+    setCliente("")
+    setRappresentante("")
+    localStorage.removeItem("proforma")
   }
 
   const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
@@ -165,38 +190,26 @@ function App() {
         if (item.nota) pdf.text(item.nota, col.nota.x + col.nota.w / 2, y + 15, { align: "center", maxWidth: col.nota.w - 4 })
         totale += parseFloat(item.prezzo.toString().replace(",", "."))
         y += rowHeight + 2
-        if (y > 260) { pdf.addPage(); y = 20 }
+        if (y > 260) {
+          pdf.addPage()
+          y = 20
+        }
       }
       pdf.setFontSize(12)
       pdf.text(`Totale: € ${totale.toFixed(2)}`, 150, y + 5)
-      if (noteGenerali) { y += 15; pdf.setFontSize(10); pdf.text("Note generali:", 10, y); pdf.text(noteGenerali, 10, y + 6) }
+      if (noteGenerali) {
+        y += 15
+        pdf.setFontSize(10)
+        pdf.text("Note generali:", 10, y)
+        pdf.text(noteGenerali, 10, y + 6)
+      }
       const nomeFile = cliente ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf` : 'proforma-senza-nome.pdf'
       pdf.save(nomeFile)
     } finally {
       setIsLoading(false)
     }
   }
-  const provider = new GoogleAuthProvider();
-  const [user, setUser] = useState(null);
 
-  const loginGoogle = async () => {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Errore login:", error);
-    }
-  };
-
-  const logout = () => {
-    signOut(auth);
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
   return (
     <>
       {!user ? (
@@ -208,34 +221,22 @@ function App() {
           {isLoading && (
             <div className="loader-pdf">Generazione PDF in corso...</div>
           )}
-
           <div className="container">
             <h1>Campionario</h1>
             <p className="welcome">Benvenutə, {user.displayName}</p>
             <button onClick={logout} className="btn-logout">Logout</button>
 
-            <input
-              type="text"
-              placeholder="Cliente"
-              value={cliente}
-              onChange={(e) => setCliente(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Rappresentante"
-              value={rappresentante}
-              onChange={(e) => setRappresentante(e.target.value)}
-            />
+            {/* Input cliente e rappresentante */}
+            <input type="text" placeholder="Cliente" value={cliente} onChange={(e) => setCliente(e.target.value)} />
+            <input type="text" placeholder="Rappresentante" value={rappresentante} onChange={(e) => setRappresentante(e.target.value)} />
+
+            {/* Ricerca articolo */}
             <div className="search-bar">
-              <input
-                type="text"
-                placeholder="Codice articolo"
-                value={codice}
-                onChange={(e) => setCodice(e.target.value)}
-              />
+              <input type="text" placeholder="Codice articolo" value={codice} onChange={(e) => setCodice(e.target.value)} />
               <button onClick={cercaArticolo}>Cerca</button>
             </div>
 
+            {/* Lista risultati */}
             {articoliTrovati.length > 0 && (
               <div className="risultati">
                 <h2>Risultati:</h2>
@@ -243,11 +244,7 @@ function App() {
                   <div key={i} className="scheda">
                     <h3>{art.codice}</h3>
                     <p>{art.descrizione}</p>
-                    <img
-                      src={art.immagine}
-                      alt={art.codice}
-                      onClick={() => setPopupImg(art.immagine)}
-                    />
+                    <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
                     <p>€ {formatPrezzo(art.prezzo)}</p>
                     <button className="btn-add" onClick={() => aggiungiAProforma(art)}>
                       <FaPlus />
@@ -268,23 +265,10 @@ function App() {
                 <h3>Proforma</h3>
                 <ul>
                   {proforma.map((item, i) => (
-                    <li
-                      key={i}
-                      onContextMenu={(e) => {
-                        e.preventDefault()
-                        mostraMenuRimozione(i)
-                      }}
-                    >
+                    <li key={i} onContextMenu={(e) => { e.preventDefault(); mostraMenuRimozione(i) }}>
                       <div className="info">
-                        <img
-                          src={item.immagine}
-                          alt={item.codice}
-                          className="thumb"
-                          onClick={() => setPopupImg(item.immagine)}
-                        />
-                        <span>
-                          {item.codice} - € {formatPrezzo(item.prezzo)}
-                        </span>
+                        <img src={item.immagine} alt={item.codice} className="thumb" onClick={() => setPopupImg(item.immagine)} />
+                        <span>{item.codice} - € {formatPrezzo(item.prezzo)}</span>
                       </div>
                       <textarea
                         placeholder="Nota su questo articolo..."
@@ -302,47 +286,33 @@ function App() {
                   className="note-generali"
                 ></textarea>
                 <div className="bottoni-proforma">
-                  <button
-                    className="btn-icon"
-                    onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}
-                  >
+                  <button className="btn-icon" onClick={() => generaPDF(proforma, noteGenerali, cliente, rappresentante)}>
                     <FaFilePdf />
                   </button>
-                  <button
-                    className="btn-icon btn-danger"
-                    onClick={() => {
-                      if (proforma.length === 0) return
-                      toast(({ closeToast }) => (
-                        <div className="toast-conferma-rimozione">
-                          <p>Vuoi svuotare tutta la proforma?</p>
-                          <div className="toast-bottoni">
-                            <button
-                              className="btn-rimuovi"
-                              onClick={() => {
-                                resetProforma()
-                                closeToast()
-                                toast.info("🧹 Proforma svuotata", {
-                                  position: "top-right",
-                                  autoClose: 2000,
-                                })
-                              }}
-                            >
-                              Sì
-                            </button>
-                            <button className="btn-annulla" onClick={closeToast}>
-                              No
-                            </button>
-                          </div>
+                  <button className="btn-icon btn-danger" onClick={() => {
+                    if (proforma.length === 0) return
+                    toast(({ closeToast }) => (
+                      <div className="toast-conferma-rimozione">
+                        <p>Vuoi svuotare tutta la proforma?</p>
+                        <div className="toast-bottoni">
+                          <button className="btn-rimuovi" onClick={() => {
+                            resetProforma()
+                            closeToast()
+                            toast.info("🧹 Proforma svuotata", { position: "top-right", autoClose: 2000 })
+                          }}>
+                            Sì
+                          </button>
+                          <button className="btn-annulla" onClick={closeToast}>No</button>
                         </div>
-                      ), {
-                        position: "top-center",
-                        autoClose: false,
-                        closeOnClick: false,
-                        closeButton: false,
-                        draggable: false,
-                      })
-                    }}
-                  >
+                      </div>
+                    ), {
+                      position: "top-center",
+                      autoClose: false,
+                      closeOnClick: false,
+                      closeButton: false,
+                      draggable: false,
+                    })
+                  }}>
                     <FaTrash />
                   </button>
                 </div>
