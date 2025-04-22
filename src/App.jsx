@@ -82,10 +82,15 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
+      if (currentUser?.email?.endsWith('@emcompany.it')) {
+        setUser(currentUser)
+      } else if (currentUser) {
+        signOut(auth)
+        toast.error("Accesso consentito solo con email @emcompany.it", { position: "top-center" })
+      }
     })
     return () => unsubscribe()
-  }, [])
+  }, [])  
 
   useEffect(() => {
     Papa.parse('https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv', {
