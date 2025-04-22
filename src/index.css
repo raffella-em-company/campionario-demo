@@ -1,34 +1,52 @@
+/* ————————————————————————————————
+   RESET E BASE
+———————————————————————————————— */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Helvetica Neue', sans-serif;
   background-color: #f1f4f8;
-  margin: 0;
-  padding: 0;
   color: #333;
 }
 
+/* ————————————————————————————————
+   CONTENITORE PRINCIPALE
+———————————————————————————————— */
 .container {
-  padding: 1rem;
   max-width: 900px;
   margin: 2rem auto;
+  padding: 1rem;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-h1, h2, h3 {
-  text-align: left;
-  color: #2c3e50;
+/* ————————————————————————————————
+   TIPOGRAFIA
+———————————————————————————————— */
+h1,
+h2,
+h3 {
   margin-top: 0;
+  color: #2c3e50;
+  text-align: left;
 }
 
-input[type="text"], textarea {
+/* ————————————————————————————————
+   FORM E INPUT
+———————————————————————————————— */
+input[type="text"],
+textarea {
   width: 100%;
   padding: 10px;
   font-size: 1rem;
   margin-bottom: 1rem;
   border: 1px solid #d0d7de;
   border-radius: 6px;
-  box-sizing: border-box;
   background-color: #fff;
   color: #333;
 }
@@ -39,23 +57,29 @@ textarea {
   font-size: 0.95rem;
 }
 
+/* ————————————————————————————————
+   BOTTONI
+———————————————————————————————— */
 button {
+  display: inline-block;
+  padding: 10px 14px;
+  margin: 0.5rem 0.2rem 1rem;
+  font-size: 1rem;
   background-color: #a0d8ef;
   color: #333;
-  padding: 10px 14px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
-  margin: 0.5rem 0.2rem 1rem;
   transition: background-color 0.3s ease;
-  display: inline-block;
 }
 
 button:hover {
   background-color: #6aa9bd;
 }
 
+/* ————————————————————————————————
+   LOGIN
+———————————————————————————————— */
 .login-container {
   display: flex;
   justify-content: center;
@@ -63,6 +87,9 @@ button:hover {
   height: 100vh;
 }
 
+/* ————————————————————————————————
+   BARRA DI RICERCA
+———————————————————————————————— */
 .search-bar {
   display: flex;
   flex-wrap: wrap;
@@ -70,10 +97,14 @@ button:hover {
   align-items: center;
 }
 
-.scheda, .proforma {
+/* ————————————————————————————————
+   SCHEDA ARTICOLO E PROFORMA
+———————————————————————————————— */
+.scheda,
+.proforma {
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   padding: 1rem;
   margin-top: 1rem;
 }
@@ -99,14 +130,13 @@ button:hover {
   background: #f0f4f8;
   padding: 10px;
   border-radius: 6px;
-  margin-bottom: 10px;
   border: 1px solid #d0d7de;
+  margin-bottom: 10px;
 }
 
 .proforma .info {
   display: flex;
   align-items: center;
-  width: 100%;
   gap: 10px;
   margin-bottom: 6px;
 }
@@ -118,13 +148,16 @@ button:hover {
   cursor: zoom-in;
 }
 
+/* ————————————————————————————————
+   POPUP IMMAGINI
+———————————————————————————————— */
 .popup {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -134,10 +167,13 @@ button:hover {
 .popup img {
   max-width: 90%;
   max-height: 90%;
-  border: 3px solid white;
+  border: 3px solid #ffffff;
   border-radius: 6px;
 }
 
+/* ————————————————————————————————
+   NOTE GENERALI
+———————————————————————————————— */
 .note-generali {
   margin-top: 10px;
   padding: 8px;
@@ -147,15 +183,19 @@ button:hover {
   background-color: #fff;
 }
 
+/* ————————————————————————————————
+   PULSANTE PDF
+———————————————————————————————— */
 .btn-pdf {
+  display: inline-block;
   margin-top: 10px;
-  font-weight: bold;
-  letter-spacing: 0.5px;
+  padding: 10px 20px;
   background-color: #6c63ff;
-  color: white;
+  color: #ffffff;
   border: none;
   border-radius: 6px;
-  padding: 10px 20px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -164,10 +204,19 @@ button:hover {
   background-color: #5548c8;
 }
 
+/* ————————————————————————————————
+   MEDIA QUERY: TABLET E SUPERIORE
+———————————————————————————————— */
 @media screen and (min-width: 768px) {
+  .scheda {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
   .proforma li {
     flex-direction: row;
-    align-items: flex-start;
   }
 
   .proforma .info {
@@ -177,17 +226,6 @@ button:hover {
 
   .proforma textarea {
     width: 60%;
-  }
-
-  .scheda {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .scheda img {
-    flex-shrink: 0;
   }
 
   .toast-conferma-rimozione {
@@ -208,49 +246,31 @@ button:hover {
   }
 
   .toast-bottoni button {
-    display: flex;
     padding: 5px 12px;
-    border-radius: 4px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
   }
 
   .toast-bottoni .btn-rimuovi {
     background: #f67280;
-    color: white;
+    color: #ffffff;
   }
 
   .toast-bottoni .btn-annulla {
     background: #95a5a6;
-    color: white;
+    color: #ffffff;
   }
 
   .proforma button {
     display: inline-block !important;
   }
 
-  .loader-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    z-index: 1000;
-  }
-
   .loader-pdf {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 9999;
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.9);
@@ -260,5 +280,6 @@ button:hover {
     align-items: center;
     font-size: 1.8rem;
     font-weight: bold;
+    z-index: 1000;
   }
 }
