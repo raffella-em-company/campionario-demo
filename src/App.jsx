@@ -87,6 +87,12 @@ function App() {
     }
   }
 
+  const cercaArticolo = () => {
+    const trovati = articoli.filter(a => a.codice.toLowerCase().startsWith(codice.toLowerCase()))
+    if (trovati.length === 0) alert("Nessun articolo trovato. Controlla il codice inserito.")
+    setArticoliTrovati(trovati)
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser?.email?.endsWith('@emcompany.it')) {
