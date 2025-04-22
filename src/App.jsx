@@ -5,6 +5,9 @@ import jsPDF from 'jspdf'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { FaFilePdf, FaPlus, FaTrash } from "react-icons/fa"
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
+import { auth } from './firebase-config';
+
 
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'))
@@ -173,7 +176,27 @@ function App() {
       setIsLoading(false)
     }
   }
+  const provider = new GoogleAuthProvider();
+  const [user, setUser] = useState(null);
 
+  const loginGoogle = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Errore login:", error);
+    }
+  };
+
+  const logout = () => {
+    signOut(auth);
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
   return (
     <>
       {!user ? (
