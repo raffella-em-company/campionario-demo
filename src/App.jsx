@@ -123,6 +123,7 @@ function App() {
 
   const generaPDF = async (proforma, noteGenerali, cliente, rappresentante) => {
     setIsLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 50))
     try {
       const pdf = new jsPDF()
       const logoBase64 = await loadImageBase64('/logoEM.jpg')
