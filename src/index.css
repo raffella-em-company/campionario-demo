@@ -1,264 +1,63 @@
-body {
-  font-family: 'Helvetica Neue', sans-serif;
-  background-color: #f1f4f8;
-  margin: 0;
-  padding: 0;
-  color: #333;
-}
-
-.container {
-  padding: 1rem;
-  max-width: 900px;
-  margin: 2rem auto;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-h1, h2, h3 {
-  text-align: left;
-  color: #2c3e50;
-  margin-top: 0;
-}
-
-input[type="text"], textarea {
-  width: 100%;
-  padding: 10px;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  box-sizing: border-box;
-  background-color: #fff;
-  color: #333;
-}
-
-textarea {
-  resize: vertical;
-  font-family: inherit;
-  font-size: 0.95rem;
-}
-
-button {
-  background-color: #a0d8ef;
-  color: #333;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  margin: 0.5rem 0.2rem 1rem;
-  transition: background-color 0.3s ease;
-  display: inline-block;
-}
-
-button:hover {
-  background-color: #6aa9bd;
-}
-
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
-
-.search-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.scheda, .proforma {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.scheda img {
-  width: 100%;
-  max-width: 200px;
-  margin-top: 10px;
-  border-radius: 4px;
-  cursor: zoom-in;
-}
-
-.proforma ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
 .proforma li {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  background: #f0f4f8;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  border: 1px solid #d0d7de;
+  flex-direction: row;
 }
 
 .proforma .info {
+  width: 40%;
+  flex-shrink: 0;
+}
+
+.proforma textarea {
+  width: 60%;
+}
+
+.toast-conferma-rimozione {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.toast-conferma-rimozione p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.toast-bottoni {
   display: flex;
-  align-items: center;
-  width: 100%;
+  justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 6px;
+  margin-top: 10px;
 }
 
-.thumb {
-  width: 60px;
-  height: auto;
+.toast-bottoni button {
+  padding: 5px 12px;
+  border: none;
   border-radius: 4px;
-  cursor: zoom-in;
+  cursor: pointer;
+  font-weight: 500;
 }
 
-.popup {
+.toast-bottoni .btn-rimuovi {
+  background-color: #f67280;
+  color: #fff;
+}
+
+.toast-bottoni .btn-annulla {
+  background-color: #95a5a6;
+  color: #fff;
+}
+
+.loader-pdf {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.8);
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #000;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
-}
-
-.popup img {
-  max-width: 90%;
-  max-height: 90%;
-  border: 3px solid white;
-  border-radius: 6px;
-}
-
-.note-generali {
-  margin-top: 10px;
-  padding: 8px;
-  font-size: 0.95rem;
-  border-radius: 6px;
-  border: 1px solid #d0d7de;
-  background-color: #fff;
-}
-
-.btn-pdf {
-  margin-top: 10px;
+  font-size: 1.8rem;
   font-weight: bold;
-  letter-spacing: 0.5px;
-  background-color: #6c63ff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.btn-pdf:hover {
-  background-color: #5548c8;
-}
-
-@media screen and (min-width: 768px) {
-  .proforma li {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .proforma .info {
-    width: 40%;
-    flex-shrink: 0;
-  }
-
-  .proforma textarea {
-    width: 60%;
-  }
-
-  .scheda {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .scheda img {
-    flex-shrink: 0;
-  }
-
-  .toast-conferma-rimozione {
-    font-family: inherit;
-    font-size: 14px;
-  }
-
-  .toast-conferma-rimozione p {
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .toast-bottoni {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
-  }
-
-  .toast-bottoni button {
-    display: flex;
-    padding: 5px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-weight: 500;
-  }
-
-  .toast-bottoni .btn-rimuovi {
-    background: #f67280;
-    color: white;
-  }
-
-  .toast-bottoni .btn-annulla {
-    background: #95a5a6;
-    color: white;
-  }
-
-  .proforma button {
-    display: inline-block !important;
-  }
-
-  .loader-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255,255,255,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    z-index: 1000;
-  }
-
-  .loader-pdf {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.8rem;
-    font-weight: bold;
-  }
+  z-index: 1000;
 }

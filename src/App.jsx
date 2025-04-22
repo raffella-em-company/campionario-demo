@@ -61,39 +61,33 @@ function App() {
   const [popupImg, setPopupImg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // salva tutto insieme
   useEffect(() => {
-    localStorage.setItem('appState', JSON.stringify({
-      proforma, cliente, rappresentante, noteGenerali
-    }));
+    localStorage.setItem('appState', JSON.stringify({ proforma, cliente, rappresentante, noteGenerali }));
   }, [proforma, cliente, rappresentante, noteGenerali]);
 
   // --- Caricamento CSV ---
   useEffect(() => {
-    Papa.parse(
-      'https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv',
-      {
-        download: true,
-        header: true,
-        complete: ({ data }) => {
-          const mapped = data
-            .filter(r => r.Codice && r.Codice.trim() !== '')
-            .map(r => ({
-              codice: r.Codice,
-              descrizione: r.Descrizione,
-              unitaMisura: r['Unità di misura'],
-              moq: r['M.O.Q.'],
-              prezzoCampione: r['Prezzo Campione'],
-              prezzoProduzione: r['Prezzo Produzione'],
-              immagine: r.Immagine
-            }));
-          setArticoli(mapped);
-        },
-        error: err => toast.error('Errore caricamento: '+err.message)
-      }
-    );
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTcR6bZ3XeX-6tzjcoWpCws6k0QeJNdkaYJ8Q_IaJNkXUP3kWF75gSC51BK6hcJfloRWtMxD239ZCSq/pub?output=csv';
+    Papa.parse(csvUrl, {
+      download: true,
+      header: true,
+      complete: ({ data }) => {
+        const mapped = data
+          .filter(r => r.Codice && r.Codice.trim() !== '')
+          .map(r => ({
+            codice: r.Codice,
+            descrizione: r.Descrizione,
+            unitaMisura: r['Unità di misura'],
+            moq: r['M.O.Q.'],
+            prezzoCampione: r['Prezzo Campione'],
+            prezzoProduzione: r['Prezzo Produzione'],
+            immagine: r.Immagine
+          }));
+        setArticoli(mapped);
+      },
+      error: err => toast.error('Errore caricamento: ' + err.message, { position: 'top-right' })
+    });
   }, []);
-  
 
   // --- Autenticazione Google ---
   const provider = new GoogleAuthProvider();
@@ -108,25 +102,20 @@ function App() {
   // --- Funzioni di ricerca e proforma ---
   const cercaArticolo = () => {
     const term = codice.trim().toLowerCase();
-    const trovati = articoli.filter(a =>
-      (a.codice || '').toLowerCase().includes(term)
-    );
-    if (trovati.length === 0) {
-      toast.info('Nessun articolo trovato.', { position: 'top-right' });
-    }
+    const trovati = articoli.filter(a => (a.codice || '').toLowerCase().includes(term));
+    if (trovati.length === 0) toast.info('Nessun articolo trovato.', { position: 'top-right' });
     setArticoliTrovati(trovati);
   };
 
-  const aggiungiAProforma = (item) => {
+  const aggiungiAProforma = item => {
     if (proforma.some(p => p.codice === item.codice)) {
-      toast.warning(`Già presente: ${item.codice}`, { position: 'top-right' });
-      return;
+      toast.warning(`Già presente: ${item.codice}`, { position: 'top-right' }); return;
     }
     setProforma([...proforma, { ...item, nota: '' }]);
     toast.success(`Aggiunto: ${item.codice}`, { position: 'top-right' });
   };
 
-  const rimuoviDaProforma = (i) => {
+  const rimuoviDaProforma = i => {
     const arr = [...proforma]; arr.splice(i, 1);
     setProforma(arr);
     toast.info('Articolo rimosso', { position: 'top-right' });
@@ -142,103 +131,92 @@ function App() {
     toast.info('Proforma svuotata', { position: 'top-right' });
   };
 
-  // --- Generazione PDF multi‑pagina ---
+  // --- Generazione PDF con header azienda e griglia Excel-style ---
   const generaPDF = async () => {
     setIsLoading(true);
     try {
       const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-      // logo
-      const logo64 = await loadImageBase64('/logoEM.jpg');
-      const img = new Image(); img.src = '/logoEM.jpg';
-      await new Promise(r => img.onload = r);
-      const logoW = 40, logoH = logoW * (img.height / img.width);
-
-      const cols = [
-        { key: 'img', label: '', x: 10, w: 20 },
-        { key: 'codice', label: 'Codice', x: 32, w: 25 },
-        { key: 'descrizione', label: 'Descrizione', x: 57, w: 50 },
-        { key: 'unitaMisura', label: 'U.M.', x: 109, w: 15 },
-        { key: 'moq', label: 'M.O.Q.', x: 124, w: 15 },
-        { key: 'prezzoCampione', label: 'Prezzo C.', x: 139, w: 20 },
-        { key: 'prezzoProduzione', label: 'Prezzo P.', x: 161, w: 20 },
-        { key: 'nota', label: 'Nota', x: 183, w: 25 },
-      ];
-      const rowH = 12;
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
 
-      const drawHeader = () => {
-        pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
-        pdf.setFontSize(16);
-        pdf.text('Proforma Ordine Campionario', pw / 2, 20, { align: 'center' });
-        pdf.setFontSize(10);
-        pdf.text(`Cliente: ${cliente}`, 10, 30);
-        pdf.text(`Rappresentante: ${rappresentante}`, 10, 36);
+      // 1) HEADER AZIENDA
+      const hx = 10, hy = 5, hw = 80, hh = 30;
+      pdf.setFillColor(173, 216, 230);
+      pdf.rect(hx, hy, hw, hh, 'F');
+      pdf.setFontSize(10);
+      const info = [
+        'E.M. COMPANY SRL',
+        'VIA GUIDO ROSSA 184',
+        '62015 MONTE SAN GIUSTO MC',
+        'P.IVA 01251100532',
+        'www.emcompany.it · info@emcompany.it',
+        'TEL. +39 0733 539723 · FAX +39 0733 837270'
+      ];
+      info.forEach((l, i) => pdf.text(l, hx + 2, hy + 6 + i * 4));
+
+      // 2) INTESTAZIONE PROFORMA
+      pdf.setFontSize(14);
+      pdf.text('Proforma Ordine Campionario', pw/2, hy + 12, { align: 'center' });
+      pdf.setFontSize(10);
+      pdf.text(`Cliente: ${cliente}`, hx, hy + hh + 6);
+      pdf.text(`Rappresentante: ${rappresentante}`, hx, hy + hh + 12);
+
+      // 3) GRIGLIA EXCEL-STYLE
+      const tableX = hx;
+      const tableY = hy + hh + 20;
+      const colW = [20,25,60,15,15,20,20,15];
+      const rowH = 12;
+      const maxRows = Math.floor((ph - tableY - 20)/rowH);
+      const drawGrid = (startY) => {
+        for (let r=0; r<maxRows; r++) {
+          let x=tableX;
+          const yPos = startY + r*rowH;
+          colW.forEach(w => { pdf.rect(x,yPos,w,rowH); x+=w; });
+        }
       };
+      drawGrid(tableY);
 
-      const drawTableHeader = (y) => {
-        pdf.setFontSize(8);
-        cols.forEach(c => {
-          pdf.rect(c.x, y, c.w, rowH);
-          pdf.text(c.label, c.x + c.w/2, y + rowH/2 + 2, { align: 'center' });
-        });
-      };
-
-      let y = 45, totale = 0;
-      drawHeader();
-      drawTableHeader(y);
-      y += rowH;
-
+      // 4) POPOLA RIGHE
+      let y = tableY;
+      let row = 0;
       for (const it of proforma) {
-        if (y + rowH > ph - 20) {
-          pdf.addPage();
-          y = 20;
-          drawHeader();
-          drawTableHeader(y);
-          y += rowH;
+        if (row >= maxRows) {
+          pdf.addPage(); y = tableY; row = 0; drawGrid(tableY);
         }
         // immagine
-        const { base64, width, height } = await resizeImageSafe(it.immagine);
-        let iw = cols[0].w - 2, ih = (iw * height) / width;
-        if (ih > rowH - 2) {
-          ih = rowH - 2;
-          iw = (ih * width) / height;
-        }
-        pdf.addImage(base64, 'JPEG', cols[0].x + 1, y + 1 + ((rowH - 2) - ih)/2, iw, ih);
-
+        const { base64, width, height } = await resizeImageSafe(it.immagine, colW[0]-2);
+        let iw = colW[0]-2, ih = (iw*height)/width;
+        if (ih > rowH-2) { ih = rowH-2; iw = (ih*width)/height; }
+        pdf.addImage(base64,'JPEG', tableX+1, y+1+((rowH-2)-ih)/2, iw, ih);
+        // testi
+        let x = tableX + colW[0];
         pdf.setFontSize(8);
-        pdf.text(it.codice, cols[1].x+cols[1].w/2, y + rowH/2 + 2, { align: 'center' });
-        pdf.text(pdf.splitTextToSize(it.descrizione, cols[2].w-2), cols[2].x+1, y+4);
-        pdf.text(it.unitaMisura, cols[3].x+cols[3].w/2, y + rowH/2 + 2, { align: 'center' });
-        pdf.text(it.moq,       cols[4].x+cols[4].w/2, y + rowH/2 + 2, { align: 'center' });
-        pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`,   cols[5].x+cols[5].w/2, y + rowH/2 + 2, { align: 'center' });
-        pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, cols[6].x+cols[6].w/2, y + rowH/2 + 2, { align: 'center' });
-        if (it.nota) {
-          pdf.text(pdf.splitTextToSize(it.nota, cols[7].w-2), cols[7].x+1, y+4);
-        }
-
-        totale += parseFloat(it.prezzoCampione.toString().replace(',', '.'));
-        y += rowH;
+        pdf.text(it.codice, x+colW[1]/2, y+rowH/2+2, {align:'center'}); x+=colW[1];
+        pdf.text(pdf.splitTextToSize(it.descrizione, colW[2]-2), x+1, y+4); x+=colW[2];
+        pdf.text(it.unitaMisura, x+colW[3]/2, y+rowH/2+2,{align:'center'}); x+=colW[3];
+        pdf.text(it.moq, x+colW[4]/2, y+rowH/2+2,{align:'center'}); x+=colW[4];
+        pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, x+colW[5]/2, y+rowH/2+2,{align:'center'}); x+=colW[5];
+        pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, x+colW[6]/2, y+rowH/2+2,{align:'center'});
+        row++; y += rowH;
       }
 
-      // totale & note generali
-      if (y + 10 > ph - 20) { pdf.addPage(); y = 20; drawHeader(); }
+      // 5) TOTALE & NOTE
+      if (y + 10 > ph - 20) { pdf.addPage(); y = tableY; }
+      let totale = proforma.reduce((s,it) => s + parseFloat(it.prezzoCampione.replace(',', '.')), 0);
       pdf.setFontSize(12);
-      pdf.text(`Totale: € ${totale.toFixed(2)}`, pw - 10, y+5, { align: 'right' });
+      pdf.text(`Totale: € ${totale.toFixed(2)}`, pw-10, y+5, {align:'right'});
       if (noteGenerali) {
-        y += 10;
         pdf.setFontSize(10);
-        pdf.text('Note generali:', 10, y+5);
-        pdf.text(pdf.splitTextToSize(noteGenerali, pw-20), 10, y+10);
+        pdf.text('Note generali:', hx, y+12);
+        pdf.text(pdf.splitTextToSize(noteGenerali, pw-hx*2), hx, y+17);
       }
 
       // salva
-      const safeName = cliente
-        ? `proforma-${cliente.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_').replace(/[^\w\-]/g, '')}.pdf`
-        : 'proforma-senza-nome.pdf';
-      pdf.save(safeName);
-
-    } catch (e) {
+      const name = cliente
+        ? `proforma-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`
+        : 'proforma.pdf';
+      pdf.save(name);
+    } catch(e) {
       console.error(e);
       toast.error('Errore generazione PDF', { position: 'top-right' });
     } finally {
@@ -246,8 +224,7 @@ function App() {
     }
   };
 
-  // conferma rimozione singola
-  const confermaRimuovi = (i) => {
+  const confermaRimuovi = i => {
     toast(({ closeToast }) => (
       <div className="toast-conferma-rimozione">
         <p>Rimuovere questo articolo?</p>
@@ -296,7 +273,7 @@ function App() {
                     <p>Campione: € {formatPrezzo(art.prezzoCampione)}</p>
                     <p>Produzione: € {formatPrezzo(art.prezzoProduzione)}</p>
                     <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
-                    <button className="btn-add" onClick={() => aggiungiAProforma(art)}><FaPlus /></button>
+                    <button className="btn-add" onClick={() => aggiungiAProforma(art)}><FaPlus/></button>
                   </div>
                 ))}
               </div>
@@ -308,43 +285,26 @@ function App() {
               </div>
             )}
 
-            {proforma.length > 0 && (
+            {proforma.length>0 && (
               <div className="proforma">
                 <h3>Proforma</h3>
                 <ul>
-                  {proforma.map((it, i) => (
-                    <li
-                      key={it.codice}
-                      onContextMenu={e => { e.preventDefault(); confermaRimuovi(i); }}
-                    >
+                  {proforma.map((it,i)=>(
+                    <li key={it.codice} onContextMenu={e=>{e.preventDefault();confermaRimuovi(i);}}>
                       <div className="info">
-                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
+                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={()=>setPopupImg(it.immagine)}/>
                         <span>{it.codice}</span>
                         <span>Camp.: € {formatPrezzo(it.prezzoCampione)}</span>
                         <span>Prod.: € {formatPrezzo(it.prezzoProduzione)}</span>
                       </div>
-                      <textarea
-                        placeholder="Nota su questo articolo..."
-                        value={it.nota}
-                        onChange={e => aggiornaNota(i, e.target.value)}
-                      />
+                      <textarea placeholder="Nota su questo articolo..." value={it.nota} onChange={e=>aggiornaNota(i,e.target.value)}/>
                     </li>
                   ))}
                 </ul>
-
-                <textarea
-                  placeholder="Note generali..."
-                  className="note-generali"
-                  rows={3}
-                  value={noteGenerali}
-                  onChange={e => setNoteGenerali(e.target.value)}
-                />
-
+                <textarea placeholder="Note generali..." className="note-generali" rows={3} value={noteGenerali} onChange={e=>setNoteGenerali(e.target.value)}/>
                 <div className="bottoni-proforma">
-                  <button className="btn-icon" onClick={generaPDF}><FaFilePdf /></button>
-                  <button className="btn-icon btn-danger" onClick={() => confermaRimuovi('all')}>
-                    <FaTrash />
-                  </button>
+                  <button className="btn-icon" onClick={generaPDF}><FaFilePdf/></button>
+                  <button className="btn-icon btn-danger" onClick={()=>resetProforma()}><FaTrash/></button>
                 </div>
               </div>
             )}
