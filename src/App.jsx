@@ -131,98 +131,106 @@ function App() {
     toast.info('Proforma svuotata', { position: 'top-right' });
   };
 
-  // --- Generazione PDF con header azienda e griglia Excel-style ---
-  const generaPDF = async () => {
-    setIsLoading(true);
-    try {
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-      const pw = pdf.internal.pageSize.getWidth();
-      const ph = pdf.internal.pageSize.getHeight();
-
-      // 1) HEADER AZIENDA
-      const hx = 10, hy = 5, hw = 80, hh = 30;
-      pdf.setFillColor(173, 216, 230);
-      pdf.rect(hx, hy, hw, hh, 'F');
-      pdf.setFontSize(10);
-      const info = [
-        'E.M. COMPANY SRL',
-        'VIA GUIDO ROSSA 184',
-        '62015 MONTE SAN GIUSTO MC',
-        'P.IVA 01251100532',
-        'www.emcompany.it · info@emcompany.it',
-        'TEL. +39 0733 539723 · FAX +39 0733 837270'
-      ];
-      info.forEach((l, i) => pdf.text(l, hx + 2, hy + 6 + i * 4));
-
-      // 2) INTESTAZIONE PROFORMA
-      pdf.setFontSize(14);
-      pdf.text('Proforma Ordine Campionario', pw/2, hy + 12, { align: 'center' });
-      pdf.setFontSize(10);
-      pdf.text(`Cliente: ${cliente}`, hx, hy + hh + 6);
-      pdf.text(`Rappresentante: ${rappresentante}`, hx, hy + hh + 12);
-
-      // 3) GRIGLIA EXCEL-STYLE
-      const tableX = hx;
-      const tableY = hy + hh + 20;
-      const colW = [20,25,60,15,15,20,20,15];
-      const rowH = 12;
-      const maxRows = Math.floor((ph - tableY - 20)/rowH);
-      const drawGrid = (startY) => {
-        for (let r=0; r<maxRows; r++) {
-          let x=tableX;
-          const yPos = startY + r*rowH;
-          colW.forEach(w => { pdf.rect(x,yPos,w,rowH); x+=w; });
-        }
-      };
-      drawGrid(tableY);
-
-      // 4) POPOLA RIGHE
-      let y = tableY;
-      let row = 0;
-      for (const it of proforma) {
-        if (row >= maxRows) {
-          pdf.addPage(); y = tableY; row = 0; drawGrid(tableY);
-        }
-        // immagine
-        const { base64, width, height } = await resizeImageSafe(it.immagine, colW[0]-2);
-        let iw = colW[0]-2, ih = (iw*height)/width;
-        if (ih > rowH-2) { ih = rowH-2; iw = (ih*width)/height; }
-        pdf.addImage(base64,'JPEG', tableX+1, y+1+((rowH-2)-ih)/2, iw, ih);
-        // testi
-        let x = tableX + colW[0];
-        pdf.setFontSize(8);
-        pdf.text(it.codice, x+colW[1]/2, y+rowH/2+2, {align:'center'}); x+=colW[1];
-        pdf.text(pdf.splitTextToSize(it.descrizione, colW[2]-2), x+1, y+4); x+=colW[2];
-        pdf.text(it.unitaMisura, x+colW[3]/2, y+rowH/2+2,{align:'center'}); x+=colW[3];
-        pdf.text(it.moq, x+colW[4]/2, y+rowH/2+2,{align:'center'}); x+=colW[4];
-        pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, x+colW[5]/2, y+rowH/2+2,{align:'center'}); x+=colW[5];
-        pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, x+colW[6]/2, y+rowH/2+2,{align:'center'});
-        row++; y += rowH;
-      }
-
-      // 5) TOTALE & NOTE
-      if (y + 10 > ph - 20) { pdf.addPage(); y = tableY; }
-      let totale = proforma.reduce((s,it) => s + parseFloat(it.prezzoCampione.replace(',', '.')), 0);
-      pdf.setFontSize(12);
-      pdf.text(`Totale: € ${totale.toFixed(2)}`, pw-10, y+5, {align:'right'});
-      if (noteGenerali) {
+    // --- Generazione PDF con header azienda e griglia Excel-style ---
+    const generaPDF = async () => {
+      setIsLoading(true);
+      try {
+        const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pw = pdf.internal.pageSize.getWidth();
+        const ph = pdf.internal.pageSize.getHeight();
+  
+        // 1) HEADER AZIENDA - solo logo
+        const logo64 = await loadImageBase64('/logoEM.jpg');
+        const img = new Image(); img.src = '/logoEM.jpg';
+        await new Promise(r => img.onload = r);
+        const logoW = 60;
+        const logoH = logoW * (img.height / img.width);
+        pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
+  
+        // 2) INTESTAZIONE PROFORMA
+        pdf.setFontSize(14);
+        pdf.text('Proforma Ordine Campionario', pw / 2, 20, { align: 'center' });
         pdf.setFontSize(10);
-        pdf.text('Note generali:', hx, y+12);
-        pdf.text(pdf.splitTextToSize(noteGenerali, pw-hx*2), hx, y+17);
+        pdf.text(`Cliente: ${cliente}`, 10, logoH + 10);
+        pdf.text(`Rappresentante: ${rappresentante}`, 10, logoH + 16);
+  
+        // 3) GRIGLIA EXCEL-STYLE
+        const tableX = 10;
+        const tableY = logoH + 25;
+        const colW = [60, 20, 60, 15, 15, 20, 20, 15]; // immagine 60mm
+        const rowH = 15;
+        const maxRows = Math.floor((ph - tableY - 20) / rowH);
+        const drawGrid = startY => {
+          for (let r = 0; r < maxRows; r++) {
+            let x = tableX;
+            const yPos = startY + r * rowH;
+            colW.forEach(w => { pdf.rect(x, yPos, w, rowH); x += w; });
+          }
+        };
+        drawGrid(tableY);
+  
+        // 4) POPOLA RIGHE
+        let y = tableY;
+        let row = 0;
+        for (const it of proforma) {
+          if (row >= maxRows) {
+            pdf.addPage();
+            y = tableY;
+            row = 0;
+            drawGrid(tableY);
+          }
+          // immagine
+          const { base64, width, height } = await resizeImageSafe(it.immagine, colW[0] - 2);
+          let iw = colW[0] - 2;
+          let ih = (iw * height) / width;
+          if (ih > rowH - 2) { ih = rowH - 2; iw = (ih * width) / height; }
+          pdf.addImage(base64, 'JPEG', tableX + 1, y + 1 + ((rowH - 2) - ih) / 2, iw, ih);
+  
+          // testi colonne
+          let x = tableX + colW[0];
+          pdf.setFontSize(8);
+          pdf.text(it.codice, x + colW[1] / 2, y + rowH / 2 + 2, { align: 'center' });
+          x += colW[1];
+          pdf.text(pdf.splitTextToSize(it.descrizione, colW[2] - 2), x + 1, y + 4);
+          x += colW[2];
+          pdf.text(it.unitaMisura, x + colW[3] / 2, y + rowH / 2 + 2, { align: 'center' });
+          x += colW[3];
+          pdf.text(it.moq, x + colW[4] / 2, y + rowH / 2 + 2, { align: 'center' });
+          x += colW[4];
+          pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, x + colW[5] / 2, y + rowH / 2 + 2, { align: 'center' });
+          x += colW[5];
+          pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, x + colW[6] / 2, y + rowH / 2 + 2, { align: 'center' });
+  
+          row++;
+          y += rowH;
+        }
+  
+        // 5) NOTE GENERALI (se presenti)
+        if (noteGenerali) {
+          let footerY = y + 5;
+          if (footerY + 20 > ph) {
+            pdf.addPage();
+            footerY = 20;
+          }
+          pdf.setFontSize(10);
+          pdf.text('Note generali:', 10, footerY);
+          pdf.text(pdf.splitTextToSize(noteGenerali, pw - 20), 10, footerY + 6);
+        }
+  
+        // salva PDF
+        const name = cliente
+          ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`
+          : 'proforma.pdf';
+        pdf.save(name);
+  
+      } catch (e) {
+        console.error(e);
+        toast.error('Errore generazione PDF', { position: 'top-right' });
+      } finally {
+        setIsLoading(false);
       }
-
-      // salva
-      const name = cliente
-        ? `proforma-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`
-        : 'proforma.pdf';
-      pdf.save(name);
-    } catch(e) {
-      console.error(e);
-      toast.error('Errore generazione PDF', { position: 'top-right' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+  
 
   const confermaRimuovi = i => {
     toast(({ closeToast }) => (
