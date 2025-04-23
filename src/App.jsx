@@ -255,10 +255,11 @@ function App() {
           const { base64, width, height } = await resizeImageSafe(it.immagine);
           let iw = width;
           let ih = height;
-          
+
           const maxW = colW[1] - 4;
           const maxH = rowH - 10;
-          
+
+          // Ridimensiona solo se eccede
           if (iw > maxW) {
             const scale = maxW / iw;
             iw *= scale;
@@ -268,10 +269,15 @@ function App() {
             const scale = maxH / ih;
             iw *= scale;
             ih *= scale;
-          }          
-          pdf.addImage(base64, 'JPEG', posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
+          }
+
+          // Estensione immagine (serve per usare PNG se disponibile)
+          const estensione = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
+
+          pdf.addImage(base64, estensione, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
           posX += colW[1];
 
+          // Dati tabella
           pdf.text(it.unitaMisura || '', posX + 2, y + 6); posX += colW[2];
           pdf.text(it.moq || '', posX + 2, y + 6); posX += colW[3];
           pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, posX + 2, y + 6); posX += colW[4];
