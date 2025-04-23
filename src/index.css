@@ -282,4 +282,10 @@ button:hover {
     font-weight: bold;
     z-index: 1000;
   }
+  .input-quantita {
+    width: 60px;
+    padding: 4px;
+    margin-top: 4px;
+    font-size: 14px;
+  }  
 }

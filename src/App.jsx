@@ -130,7 +130,7 @@ function App() {
     if (proforma.some(p => p.codice === item.codice)) {
       toast.warning(`Già presente: ${item.codice}`, { position: 'top-right' }); return;
     }
-    setProforma([...proforma, { ...item, nota: '' }]);
+    setProforma([...proforma, { ...item, nota: '', quantita: 1 }]);
     toast.success(`Aggiunto: ${item.codice}`, { position: 'top-right' });
   };
 
@@ -144,6 +144,11 @@ function App() {
     const arr = [...proforma]; arr[i].nota = testo;
     setProforma(arr);
   };
+  const aggiornaQuantita = (i, valore) => {
+    const arr = [...proforma];
+    arr[i].quantita = parseInt(valore) || 1;
+    setProforma(arr);
+  };  
 
   const resetProforma = () => {
     setProforma([]);
@@ -329,15 +334,27 @@ function App() {
               <div className="proforma">
                 <h3>Proforma</h3>
                 <ul>
-                  {proforma.map((it,i)=>(
-                    <li key={it.codice} onContextMenu={e=>{e.preventDefault();confermaRimuovi(i);}}>
+                  {proforma.map((it, i) => (
+                    <li key={it.codice} onContextMenu={e => { e.preventDefault(); confermaRimuovi(i); }}>
                       <div className="info">
-                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={()=>setPopupImg(it.immagine)}/>
+                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
                         <span>{it.codice}</span>
                         <span>Camp.: € {formatPrezzo(it.prezzoCampione)}</span>
                         <span>Prod.: € {formatPrezzo(it.prezzoProduzione)}</span>
                       </div>
-                      <textarea placeholder="Nota su questo articolo..." value={it.nota} onChange={e=>aggiornaNota(i,e.target.value)}/>
+                      <textarea
+                        placeholder="Nota su questo articolo..."
+                        value={it.nota}
+                        onChange={e => aggiornaNota(i, e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        min="1"
+                        className="input-quantita"
+                        value={it.quantita}
+                        onChange={e => aggiornaQuantita(i, e.target.value)}
+                        placeholder="Quantità"
+                      />
                     </li>
                   ))}
                 </ul>
