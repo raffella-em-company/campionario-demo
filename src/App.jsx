@@ -166,46 +166,46 @@ function App() {
         const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
         const pw = pdf.internal.pageSize.getWidth();
         const ph = pdf.internal.pageSize.getHeight();
-  
-        // 1) HEADER AZIENDA - solo logo
+    
+        // Logo
         const logo64 = await loadImageBase64('/logoEM.jpg');
-        const img = new Image(); img.src = '/logoEM.jpg';
-        await new Promise(r => img.onload = r);
-        const logoW = 60;
+        const img = new Image();
+        img.src = '/logoEM.jpg';
+        await new Promise(r => (img.onload = r));
+        const logoW = 40;
         const logoH = logoW * (img.height / img.width);
         pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
-  
-        // 2) INTESTAZIONE PROFORMA
+    
+        // Info azienda sotto logo
+        pdf.setFontSize(8);
+        const headerY = 5 + logoH + 2;
+        pdf.text('VIA GUIDO ROSSA 184', 10, headerY);
+        pdf.text('62015 MONTE SAN GIUSTO MC', 10, headerY + 4);
+        pdf.text('P.IVA  01251100532', 10, headerY + 8);
+        pdf.text('www.emcompany.it   info@emcompany.it', 10, headerY + 12);
+        pdf.text('TEL.+39 0733 539723 FAX +39 0733 837270', 10, headerY + 16);
+    
+        // Cliente e rappresentante
+        const infoY = headerY + 24;
         pdf.setFontSize(10);
-        const infoStartY = logoH + 10;
-        const rappresentanteNome = user.displayName || '';
-        const rappresentanteEmail = user.email || '';
-        pdf.text(`Cliente: ${cliente}`, 10, infoStartY);
-        pdf.text(`Banca: ${banca}`, 10, infoStartY + 6);
-        pdf.text(`Data: ${new Date().toLocaleDateString()}`, 10, infoStartY + 12);
-        pdf.text(`Corriere: ${corriere}`, 10, infoStartY + 18);
+        pdf.text(`Cliente: ${cliente}`, 10, infoY);
+        pdf.text(`Banca: ${banca}`, 10, infoY + 6);
+        pdf.text(`Data: ${new Date().toLocaleDateString()}`, 10, infoY + 12);
+        pdf.text(`Corriere: ${corriere}`, 10, infoY + 18);
+    
         pdf.setFont(undefined, 'bold');
-        pdf.text(`RAPPRESENTANTE:`, pw - 70, infoStartY);
-        pdf.text(rappresentanteNome, pw - 70, infoStartY + 6);
+        pdf.text(`RAPPRESENTANTE:`, pw - 70, infoY);
+        pdf.text(user.displayName || '', pw - 70, infoY + 6);
         pdf.setFont(undefined, 'normal');
-        pdf.text(rappresentanteEmail, pw - 70, infoStartY + 12);
-  
-        // 3) GRIGLIA EXCEL-STYLE
+        pdf.text(user.email || '', pw - 70, infoY + 12);
+    
+        // Tabella
         const tableX = 10;
-        const tableY = logoH + 25;
-        const colW = [60, 20, 60, 15, 15, 20, 20, 15]; // immagine 60mm
-        const rowH = 15;
-        const maxRows = Math.floor((ph - tableY - 20) / rowH);
-        const drawGrid = startY => {
-          for (let r = 0; r < maxRows; r++) {
-            let x = tableX;
-            const yPos = startY + r * rowH;
-            colW.forEach(w => { pdf.rect(x, yPos, w, rowH); x += w; });
-          }
-        };
-        drawGrid(tableY);
-  
-        // 4) POPOLA RIGHE
+        const tableY = infoY + 25;
+        const colW = [25, 35, 15, 15, 25, 15]; // codice, img, UM, MOQ, prezzo, quant
+        const rowH = 50;
+        const maxRows = 4;
+    
         let y = tableY;
         let row = 0;
         for (const it of proforma) {
@@ -213,59 +213,71 @@ function App() {
             pdf.addPage();
             y = tableY;
             row = 0;
-            drawGrid(tableY);
           }
-          // immagine
-          const { base64, width, height } = await resizeImageSafe(it.immagine, colW[0] - 2);
-          let iw = colW[0] - 2;
-          let ih = (iw * height) / width;
-          if (ih > rowH - 2) { ih = rowH - 2; iw = (ih * width) / height; }
-          pdf.addImage(base64, 'JPEG', tableX + 1, y + 1 + ((rowH - 2) - ih) / 2, iw, ih);
-  
-          // testi colonne
-          let x = tableX + colW[0];
+    
+          // riga griglia
+          let x = tableX;
+          colW.forEach(w => {
+            pdf.rect(x, y, w, rowH);
+            x += w;
+          });
+    
+          // contenuti
+          let posX = tableX;
           pdf.setFontSize(8);
-          pdf.text(it.codice, x + colW[1] / 2, y + rowH / 2 + 2, { align: 'center' });
-          x += colW[1];
-          pdf.text(pdf.splitTextToSize(it.descrizione, colW[2] - 2), x + 1, y + 4);
-          x += colW[2];
-          pdf.text(it.unitaMisura, x + colW[3] / 2, y + rowH / 2 + 2, { align: 'center' });
-          x += colW[3];
-          pdf.text(it.moq, x + colW[4] / 2, y + rowH / 2 + 2, { align: 'center' });
-          x += colW[4];
-          pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, x + colW[5] / 2, y + rowH / 2 + 2, { align: 'center' });
-          x += colW[5];
-          pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, x + colW[6] / 2, y + rowH / 2 + 2, { align: 'center' });
-  
-          row++;
+          pdf.text(it.codice, posX + 2, y + 6);
+          posX += colW[0];
+    
+          // Immagine
+          const { base64, width, height } = await resizeImageSafe(it.immagine, colW[1] - 4);
+          let iw = colW[1] - 4;
+          let ih = (iw * height) / width;
+          if (ih > rowH - 4) {
+            ih = rowH - 4;
+            iw = (ih * width) / height;
+          }
+          pdf.addImage(base64, 'JPEG', posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
+          posX += colW[1];
+    
+          pdf.text(it.unitaMisura || '', posX + 2, y + 6); posX += colW[2];
+          pdf.text(it.moq || '', posX + 2, y + 6); posX += colW[3];
+          pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, posX + 2, y + 6); posX += colW[4];
+          pdf.text((it.quantita || '1').toString(), posX + 2, y + 6);
+    
+          // descrizione e nota sotto
+          pdf.setFontSize(7);
+          pdf.text(pdf.splitTextToSize(it.descrizione || '', pw - 20), tableX + 1, y + rowH - 12);
+          if (it.nota) {
+            pdf.setFont(undefined, 'italic');
+            pdf.text('Nota: ' + it.nota, tableX + 1, y + rowH - 6);
+            pdf.setFont(undefined, 'normal');
+          }
+    
           y += rowH;
+          row++;
         }
-  
-        // 5) NOTE GENERALI (se presenti)
+    
+        // Note generali
         if (noteGenerali) {
-          let footerY = y + 5;
+          let footerY = y + 10;
           if (footerY + 20 > ph) {
             pdf.addPage();
             footerY = 20;
           }
           pdf.setFontSize(10);
           pdf.text('Note generali:', 10, footerY);
-          pdf.text(pdf.splitTextToSize(noteGenerali, pw - 20), 10, footerY + 6);
+          pdf.setFontSize(8);
+          pdf.text(pdf.splitTextToSize(noteGenerali, pw - 20), 10, footerY + 5);
         }
-  
-        // salva PDF
-        const name = cliente
-          ? `proforma-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`
-          : 'proforma.pdf';
-        pdf.save(name);
-  
+    
+        pdf.save(`proforma-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`);
       } catch (e) {
         console.error(e);
         toast.error('Errore generazione PDF', { position: 'top-right' });
       } finally {
         setIsLoading(false);
       }
-    };
+    };    
   
 
   const confermaRimuovi = i => {
