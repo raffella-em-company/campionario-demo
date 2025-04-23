@@ -33,11 +33,28 @@ const resizeImageSafe = async (src) => {
       reader.onloadend = () => {
         const img = new Image();
         img.onload = () => {
-          resolve({
-            base64: reader.result,
-            width: img.width,
-            height: img.height
-          });
+          const useCanvas = img.width > 1500 || img.height > 1500;
+          if (useCanvas) {
+            const canvas = document.createElement('canvas');
+            const scale = 0.5; // riduce la risoluzione del 50%
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'medium';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve({
+              base64: canvas.toDataURL('image/jpeg', 0.7), // compressione controllata
+              width: canvas.width,
+              height: canvas.height
+            });
+          } else {
+            resolve({
+              base64: reader.result,
+              width: img.width,
+              height: img.height
+            });
+          }
         };
         img.src = reader.result;
       };
@@ -48,6 +65,7 @@ const resizeImageSafe = async (src) => {
     return { base64: src, width: 1, height: 1 };
   }
 };
+
 
 function App() {
   // --- Stato e persistenza ---
@@ -264,7 +282,6 @@ function App() {
           // Applichiamo sempre uno scaling per riempire il box al meglio (anche se < 1)
           iw = iw * scale;
           ih = ih * scale;          
-          }
 
           // Estensione immagine (serve per usare PNG se disponibile)
           const estensione = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
