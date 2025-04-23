@@ -95,14 +95,28 @@ function App() {
   }, []);
 
   // --- Autenticazione Google ---
-  const provider = new GoogleAuthProvider();
   const [user, setUser] = useState(null);
+  const provider = new GoogleAuthProvider();
+
   const loginGoogle = async () => {
-    try { await signInWithPopup(auth, provider); }
-    catch (e) { toast.error('Login fallito: ' + e.message, { position: 'top-right' }); }
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const email = result.user.email;
+      if (!email.endsWith('@emcompany.it')) {
+        await signOut(auth);
+        toast.error('Accesso consentito solo a email @emcompany.it', { position: 'top-right' });
+      }
+    } catch (e) {
+      toast.error('Login fallito: ' + e.message, { position: 'top-right' });
+    }
   };
+
   const logout = () => signOut(auth);
-  useEffect(() => onAuthStateChanged(auth, u => setUser(u)), []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, u => setUser(u));
+    return () => unsubscribe();
+  }, []);
 
   // --- Funzioni di ricerca e proforma ---
   const cercaArticolo = () => {
@@ -132,9 +146,13 @@ function App() {
   };
 
   const resetProforma = () => {
-    setProforma([]); setCliente(''); setBanca(''); setCorriere(''); setNoteGenerali('');
+    setProforma([]);
+    setCliente('');
+    setBanca('');
+    setCorriere('');
+    setNoteGenerali('');
     toast.info('Proforma svuotata', { position: 'top-right' });
-  };
+  };  
 
     // --- Generazione PDF con header azienda e griglia Excel-style ---
     const generaPDF = async () => {
