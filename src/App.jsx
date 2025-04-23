@@ -223,9 +223,9 @@ function App() {
 
         // Titoli colonna
         let x = tableX;
-        pdf.setFontSize(9);
+        pdf.setFontSize(8);
         pdf.setFont(undefined, 'bold');
-        ['Articolo', 'Immagine', 'U.M.', 'M.O.Q.', 'Prezzo Campione', 'Quantità'].forEach((h, i) => {
+        ['Articolo', 'Immagine', 'U.M.', 'MOQ', 'Prz. Camp.', 'Q.tà'].forEach((h, i) => {
           pdf.rect(x, tableY, colW[i], 8);
           pdf.text(h, x + colW[i] / 2, tableY + 5, { align: 'center' });
           x += colW[i];
@@ -243,7 +243,7 @@ function App() {
             // titoli colonna su nuova pagina
             let x = tableX;
             pdf.setFont(undefined, 'bold');
-            ['Articolo', 'Immagine', 'U.M.', 'M.O.Q.', 'Prezzo Campione', 'Quantità'].forEach((h, i) => {
+            ['Articolo', 'Immagine', 'U.M.', 'MOQ', 'Prz. Camp.', 'Q.tà'].forEach((h, i) => {
               pdf.rect(x, y, colW[i], 8);
               pdf.text(h, x + colW[i] / 2, y + 5, { align: 'center' });
               x += colW[i];
