@@ -199,60 +199,84 @@ function App() {
         pdf.setFont(undefined, 'normal');
         pdf.text(user.email || '', pw - 70, infoY + 12);
     
-        // Tabella
+        // Nuove dimensioni colonne (totale 190mm su 210mm A4 con margine 10mm)
+        const colW = [30, 40, 20, 20, 40, 40]; // codice, immagine, um, moq, prezzo, quantita
         const tableX = 10;
-        const tableY = infoY + 25;
-        const colW = [25, 35, 15, 15, 25, 15]; // codice, img, UM, MOQ, prezzo, quant
-        const rowH = 50;
+        const rowH = 55;
+        const tableY = infoY + 30;
         const maxRows = 4;
-    
-        let y = tableY;
+
+        // Titoli colonna
+        let x = tableX;
+        pdf.setFontSize(9);
+        pdf.setFont(undefined, 'bold');
+        ['Articolo', 'Immagine', 'U.M.', 'M.O.Q.', 'Prezzo Campione', 'Quantità'].forEach((h, i) => {
+          pdf.rect(x, tableY, colW[i], 8);
+          pdf.text(h, x + colW[i] / 2, tableY + 5, { align: 'center' });
+          x += colW[i];
+        });
+        pdf.setFont(undefined, 'normal');
+
+        // Inizio righe contenuto
+        let y = tableY + 8;
         let row = 0;
         for (const it of proforma) {
           if (row >= maxRows) {
             pdf.addPage();
-            y = tableY;
+            y = 20;
+
+            // titoli colonna su nuova pagina
+            let x = tableX;
+            pdf.setFont(undefined, 'bold');
+            ['Articolo', 'Immagine', 'U.M.', 'M.O.Q.', 'Prezzo Campione', 'Quantità'].forEach((h, i) => {
+              pdf.rect(x, y, colW[i], 8);
+              pdf.text(h, x + colW[i] / 2, y + 5, { align: 'center' });
+              x += colW[i];
+            });
+            pdf.setFont(undefined, 'normal');
+            y += 8;
             row = 0;
           }
-    
+
           // riga griglia
           let x = tableX;
           colW.forEach(w => {
             pdf.rect(x, y, w, rowH);
             x += w;
           });
-    
+
           // contenuti
           let posX = tableX;
           pdf.setFontSize(8);
           pdf.text(it.codice, posX + 2, y + 6);
           posX += colW[0];
-    
-          // Immagine
+
+          // Immagine in alta qualità
           const { base64, width, height } = await resizeImageSafe(it.immagine, colW[1] - 4);
           let iw = colW[1] - 4;
           let ih = (iw * height) / width;
-          if (ih > rowH - 4) {
-            ih = rowH - 4;
+          if (ih > rowH - 10) {
+            ih = rowH - 10;
             iw = (ih * width) / height;
           }
           pdf.addImage(base64, 'JPEG', posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
           posX += colW[1];
-    
+
           pdf.text(it.unitaMisura || '', posX + 2, y + 6); posX += colW[2];
           pdf.text(it.moq || '', posX + 2, y + 6); posX += colW[3];
           pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, posX + 2, y + 6); posX += colW[4];
           pdf.text((it.quantita || '1').toString(), posX + 2, y + 6);
-    
-          // descrizione e nota sotto
+
+          // Descrizione e Nota sotto
+          let testoY = y + rowH - 12;
           pdf.setFontSize(7);
-          pdf.text(pdf.splitTextToSize(it.descrizione || '', pw - 20), tableX + 1, y + rowH - 12);
+          pdf.text(pdf.splitTextToSize(it.descrizione || '', pw - 20), tableX + 1, testoY);
           if (it.nota) {
             pdf.setFont(undefined, 'italic');
-            pdf.text('Nota: ' + it.nota, tableX + 1, y + rowH - 6);
+            pdf.text('Nota: ' + it.nota, tableX + 1, testoY + 5);
             pdf.setFont(undefined, 'normal');
           }
-    
+
           y += rowH;
           row++;
         }
