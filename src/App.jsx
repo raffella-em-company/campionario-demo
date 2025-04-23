@@ -257,15 +257,13 @@ function App() {
           const maxH = rowH - 10;
 
           // Ridimensiona solo se eccede
-          if (iw > maxW) {
-            const scale = maxW / iw;
-            iw *= scale;
-            ih *= scale;
-          }
-          if (ih > maxH) {
-            const scale = maxH / ih;
-            iw *= scale;
-            ih *= scale;
+          const scaleW = maxW / iw;
+          const scaleH = maxH / ih;
+          const scale = Math.min(scaleW, scaleH);
+          
+          // Applichiamo sempre uno scaling per riempire il box al meglio (anche se < 1)
+          iw = iw * scale;
+          ih = ih * scale;          
           }
 
           // Estensione immagine (serve per usare PNG se disponibile)
