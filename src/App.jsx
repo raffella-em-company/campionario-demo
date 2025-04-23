@@ -215,7 +215,7 @@ function App() {
         pdf.text(user.email || '', pw - 70, infoY + 12);
     
         // Colonne
-        const colW = [35, 110, 11.25, 11.25, 11.25, 11.25];
+        const colW = [35, 110, 10, 10, 15, 10];
         const tableX = 10;
         const rowH = 55;
         const tableY = infoY + 30;
