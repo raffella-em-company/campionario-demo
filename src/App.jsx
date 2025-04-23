@@ -24,28 +24,25 @@ const loadImageBase64 = async (url) => {
   });
 };
 
-const resizeImageSafe = async (src, maxWidth = 150) => {
+const resizeImageSafe = async (src) => {
   try {
     const res = await fetch(src, { mode: 'cors' });
     const blob = await res.blob();
-    const objectURL = URL.createObjectURL(blob);
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.src = objectURL;
-    await new Promise(r => img.onload = r);
-    const canvas = document.createElement('canvas');
-    const scale = maxWidth / img.width;
-    canvas.width = maxWidth;
-    canvas.height = img.height * scale;
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'low';
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    return {
-      base64: canvas.toDataURL('image/jpeg', 1.0),
-      width: img.width,
-      height: img.height
-    };    
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.onload = () => {
+          resolve({
+            base64: reader.result,
+            width: img.width,
+            height: img.height
+          });
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(blob);
+    });
   } catch (e) {
     console.warn('resizeImageSafe error', e);
     return { base64: src, width: 1, height: 1 };
