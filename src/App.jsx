@@ -199,8 +199,8 @@ function App() {
         pdf.setFont(undefined, 'normal');
         pdf.text(user.email || '', pw - 70, infoY + 12);
     
-        // Nuove dimensioni colonne (totale 190mm su 210mm A4 con margine 10mm)
-        const colW = [30, 40, 20, 20, 40, 40]; // codice, immagine, um, moq, prezzo, quantita
+        // Colonne
+        const colW = [35, 110, 11.25, 11.25, 11.25, 11.25];
         const tableX = 10;
         const rowH = 55;
         const tableY = infoY + 30;
@@ -252,13 +252,23 @@ function App() {
           posX += colW[0];
 
           // Immagine in alta qualità
-          const { base64, width, height } = await resizeImageSafe(it.immagine, colW[1] - 4);
-          let iw = colW[1] - 4;
-          let ih = (iw * height) / width;
-          if (ih > rowH - 10) {
-            ih = rowH - 10;
-            iw = (ih * width) / height;
+          const { base64, width, height } = await resizeImageSafe(it.immagine);
+          let iw = width;
+          let ih = height;
+          
+          const maxW = colW[1] - 4;
+          const maxH = rowH - 10;
+          
+          if (iw > maxW) {
+            const scale = maxW / iw;
+            iw *= scale;
+            ih *= scale;
           }
+          if (ih > maxH) {
+            const scale = maxH / ih;
+            iw *= scale;
+            ih *= scale;
+          }          
           pdf.addImage(base64, 'JPEG', posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
           posX += colW[1];
 
