@@ -100,7 +100,7 @@ function App() {
             unitaMisura: r['Unità di misura'],
             moq: r['M.O.Q.'],
             prezzoCampione: r['Prezzo Campione'],
-            prezzoProduzione: r['Prezzo Produzione'],
+            ricarico: r['Ricarico'],
             immagine: r.Immagine
           }));
         setArticoli(mapped);
@@ -380,7 +380,7 @@ function App() {
                     <p>U.M.: {art.unitaMisura}</p>
                     <p>MOQ: {art.moq}</p>
                     <p>Campione: € {formatPrezzo(art.prezzoCampione)}</p>
-                    <p>Produzione: € {formatPrezzo(art.prezzoProduzione)}</p>
+                    <p>Ricarico: % {formatPrezzo(art.ricarico)}</p>
                     <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
                     <button className="btn-add" onClick={() => aggiungiAProforma(art)}><FaPlus/></button>
                   </div>
@@ -404,7 +404,7 @@ function App() {
                         <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
                         <span>{it.codice}</span>
                         <span>Camp.: € {formatPrezzo(it.prezzoCampione)}</span>
-                        <span>Prod.: € {formatPrezzo(it.prezzoProduzione)}</span>
+                        <span>Ric.: % {formatPrezzo(it.ricarico)}</span>
                       </div>
                       <textarea
                         placeholder="Nota su questo articolo..."
