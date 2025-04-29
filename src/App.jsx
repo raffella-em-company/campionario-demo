@@ -95,13 +95,14 @@ function App() {
         const mapped = data
           .filter(r => r.Codice && r.Codice.trim() !== '')
           .map(r => ({
-            codice: r.Codice,
-            descrizione: r.Descrizione,
+            codice: r['Codice'],
+            descrizione: r['Descrizione'],
             unitaMisura: r['Unità di misura'],
-            moq: r['M.O.Q.'],
+            moqCampione: r['M.O.Q. Camp.'],
             prezzoCampione: r['Prezzo Campione'],
-            ricarico: r['Ricarico'],
-            immagine: r.Immagine
+            moqProduzione: r['M.O.Q. Prod.'],
+            prezzoProduzione: r['Prezzo Produzione'],
+            immagine: r['Immagine']
           }));
         setArticoli(mapped);
       },
@@ -378,9 +379,10 @@ function App() {
                     <h3>{art.codice}</h3>
                     <p>{art.descrizione}</p>
                     <p>U.M.: {art.unitaMisura}</p>
-                    <p>MOQ: {art.moq}</p>
-                    <p>Campione: € {formatPrezzo(art.prezzoCampione)}</p>
-                    <p>Ricarico: % {formatPrezzo(art.ricarico)}</p>
+                    <p>MOQ Campione: {art.moqCampione}</p>
+                    <p>Prezzo Campione: € {formatPrezzo(art.prezzoCampione)}</p>
+                    <p>MOQ Produzione: {art.moqProduzione}</p>
+                    <p>Prezzo Produzione: € {formatPrezzo(art.prezzoProduzione)}</p>
                     <img src={art.immagine} alt={art.codice} onClick={() => setPopupImg(art.immagine)} />
                     <button className="btn-add" onClick={() => aggiungiAProforma(art)}><FaPlus/></button>
                   </div>
