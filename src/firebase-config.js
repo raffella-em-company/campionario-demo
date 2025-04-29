@@ -6,12 +6,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBA5jE1rkALdeMRQZQcwQa0pTKJY9qk5iI",
-  authDomain: "campionario-app-48f2d.firebaseapp.com",
-  projectId: "campionario-app-48f2d",
-  storageBucket: "campionario-app-48f2d.firebasestorage.app",
-  messagingSenderId: "458993948554",
-  appId: "1:458993948554:web:a35dd7794d6248b7761a73"
+  apiKey: "AIzaSyAv4t6YPgvCm1kyaGxgw2aAL9NhRtM9Tcc",
+  authDomain: "app-campionario-em-company.firebaseapp.com",
+  projectId: "app-campionario-em-company",
+  storageBucket: "app-campionario-em-company.firebasestorage.app",
+  messagingSenderId: "606563783718",
+  appId: "1:606563783718:web:331bd01bf0de9a283282e7"
 };
 
 // Initialize Firebase
