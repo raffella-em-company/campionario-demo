@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaFilePdf, FaPlus, FaTrash } from 'react-icons/fa';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase-config';
+import { FaArrowUp } from 'react-icons/fa';
 
 const formatPrezzo = (val) => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'));
