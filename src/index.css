@@ -272,6 +272,32 @@ button:hover {
   gap: 10px;
   font-size: 0.85rem;
 }
+.riga-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.cella-info {
+  flex: 1 1 130px;
+  min-width: 120px;
+  background-color: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.cella-info strong {
+  display: block;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 2px;
+}
+
 /* ————————————————————————————————
    MEDIA QUERY: TABLET E SUPERIORE
 ———————————————————————————————— */

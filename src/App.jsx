@@ -430,10 +430,12 @@ function App() {
                           <div className="codice"><strong>{it.codice}</strong></div>
                           <div className="descrizione">{it.descrizione}</div>
                           <div className="righe">
-                          <div className="riga-cella"><span className="etichetta">MOQ Camp.:</span> <span>{it.moqCampione || '—'}</span></div>
-                          <div className="riga-cella"><span className="etichetta">Prezzo Camp.:</span> <span>€ {formatPrezzo(it.prezzoCampione)}</span></div>
-                          <div className="riga-cella"><span className="etichetta">MOQ Prod.:</span> <span>{it.moqProduzione || '—'}</span></div>
-                          <div className="riga-cella"><span className="etichetta">Prezzo Prod.:</span> <span>€ {formatPrezzo(it.prezzoProduzione)}</span></div>
+                          <div className="riga-info">
+                            <div className="cella-info"><strong>MOQ Camp.</strong>{it.moqCampione}</div>
+                            <div className="cella-info"><strong>Prezzo Camp.</strong>€ {formatPrezzo(it.prezzoCampione)}</div>
+                            <div className="cella-info"><strong>MOQ Prod.</strong>{it.moqProduzione}</div>
+                            <div className="cella-info"><strong>Prezzo Prod.</strong>€ {formatPrezzo(it.prezzoProduzione)}</div>
+                          </div>
                           </div>
                         </div>
                       </div>
