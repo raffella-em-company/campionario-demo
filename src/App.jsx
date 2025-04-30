@@ -194,7 +194,7 @@ function App() {
     setBanca('');
     setCorriere('');
     setNoteGenerali('');
-    toast.info('Proforma svuotata', { position: 'top-right' });
+    toast.info('Campionatura svuotata', { position: 'top-right' });
   };  
 
     // --- Generazione PDF con header azienda e griglia Excel-style ---
@@ -420,7 +420,7 @@ function App() {
 
             {proforma.length>0 && (
               <div className="proforma">
-                <h3>Proforma</h3>
+                <h3>Campionatura</h3>
                 <ul>
                   {proforma.map((it, i) => (
                     <li key={it.codice} onContextMenu={e => { e.preventDefault(); confermaRimuovi(i); }}>
