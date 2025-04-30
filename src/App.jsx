@@ -317,12 +317,12 @@ const generaPDF = async () => {
       const rawLines = (text || '').split('\n');
       let fontSize = initialFontSize;
       let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-      let lineHeight = fontSize + 0.25;
+      let lineHeight = fontSize + 0.5;
       let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
 
       while (lines.length > maxLines && fontSize > 5) {
         fontSize -= 0.5;
-        lineHeight = fontSize + 1;
+        lineHeight = fontSize + 0.5;
         lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
         maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
       }
