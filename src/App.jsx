@@ -317,7 +317,7 @@ const generaPDF = async () => {
       const rawLines = (text || '').split('\n');
       let fontSize = initialFontSize;
       let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-      let lineHeight = fontSize + 0.5;
+      let lineHeight = fontSize + 0.25;
       let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
 
       while (lines.length > maxLines && fontSize > 5) {
