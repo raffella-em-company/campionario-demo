@@ -268,26 +268,10 @@ function App() {
       // colonne dinamiche
       const colW = mostraPrezzi
       ? [35, 100, 5, 10, 10, 10, 10, 5]
-      : [35, 100, 5, 10, /*MOQ Prod.*/10, /*Q.tà*/5];
-      const headers = mostraPrezzi
-        ? [
-            'Codice + Descrizione',
-            'Immagine',
-            'U.M.',
-            'MOQ Camp.',
-            'Prezzo Camp.',
-            'MOQ Prod.',
-            'Prezzo Prod.',
-            'Q.tà'
-          ]
-        : [
-            'Codice + Descrizione',
-            'Immagine',
-            'U.M.',
-            'MOQ Camp.',
-            'MOQ Prod.',
-            'Q.tà'
-          ];
+      : [35, 135, 5, 5];
+    const headers = mostraPrezzi
+      ? ['Codice + Descrizione','Immagine','U.M.','MOQ Camp.','Prezzo Camp.','MOQ Prod.','Prezzo Prod.','Q.tà']
+      : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
 
       const tableX = 10;
       const rowH = 55;
@@ -316,17 +300,14 @@ function App() {
           drawHeaders();
           rowCount = 0;
         }
-
-        // riga griglia
+      
+        // griglia riga
         let x = tableX;
-        colW.forEach(w => {
-          pdf.rect(x, y, w, rowH);
-          x += w;
-        });
-
-        // contenuti colonna per colonna
+        colW.forEach(w => { pdf.rect(x, y, w, rowH); x += w; });
+      
         let posX = tableX;
-        // codice+descrizione
+      
+        // 1) Codice + Descrizione (3.5cm)
         pdf.setFontSize(8);
         pdf.text(it.codice, posX + 2, y + 6);
         pdf.setFontSize(7);
@@ -337,82 +318,55 @@ function App() {
         );
         pdf.setFontSize(8);
         posX += colW[0];
-
-        // immagine
-        const { base64, width, height } = await resizeImageSafe(
-          it.immagine
-        );
-        let iw = width,
-          ih = height;
-        const scale = Math.min(
-          (colW[1] - 4) / iw,
-          (rowH - 10) / ih
-        );
-        iw *= scale;
-        ih *= scale;
-        const ext = it.immagine.toLowerCase().includes('.png')
-          ? 'PNG'
-          : 'JPEG';
+      
+        // 2) Immagine (10cm o 13.5cm)
+        const { base64, width, height } = await resizeImageSafe(it.immagine);
+        let iw = width, ih = height;
+        const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
+        iw *= scale; ih *= scale;
+        const ext = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
         pdf.addImage(
-          base64,
-          ext,
+          base64, ext,
           posX + (colW[1] - iw) / 2,
           y + (rowH - ih) / 2,
-          iw,
-          ih
+          iw, ih
         );
         posX += colW[1];
-
-        // U.M.
-        pdf.text(it.unitaMisura, posX + 2, y + 6);
+      
+        // 3) U.M. (0.5cm)
+        pdf.text(it.unitaMisura || '', posX + 2, y + 6);
         posX += colW[2];
-
-        // MOQ Camp.
-        pdf.text(it.moqCampione, posX + 2, y + 6);
-        posX += colW[3];
-
-        // Prezzo Camp.
+      
         if (mostraPrezzi) {
-          pdf.text(
-            `€ ${formatPrezzo(it.prezzoCampione)}`,
-            posX + 2,
-            y + 6
-          );
+          // 4) MOQ Camp. (1cm)
+          pdf.text(it.moqCampione || '', posX + 2, y + 6);
+          posX += colW[3];
+          // 5) Prezzo Camp. (1cm)
+          pdf.text(`€ ${formatPrezzo(it.prezzoCampione)}`, posX + 2, y + 6);
           posX += colW[4];
-        }
-
-        // MOQ Prod.
-        pdf.text(it.moqProduzione, posX + 2, y + 6);
-        posX += mostraPrezzi ? colW[5] : colW[4];
-
-        // Prezzo Prod.
-        if (mostraPrezzi) {
-          pdf.text(
-            `€ ${formatPrezzo(it.prezzoProduzione)}`,
-            posX + 2,
-            y + 6
-          );
+          // 6) MOQ Prod. (1cm)
+          pdf.text(it.moqProduzione || '', posX + 2, y + 6);
+          posX += colW[5];
+          // 7) Prezzo Prod. (1cm)
+          pdf.text(`€ ${formatPrezzo(it.prezzoProduzione)}`, posX + 2, y + 6);
           posX += colW[6];
+          // 8) Quantità (0.5cm)
+          pdf.text((it.quantita || '1').toString(), posX + 2, y + 6);
+        } else {
+          // senza prezzi: salto direttamente a Q.tà (colonna 4, 0.5cm)
+          pdf.text((it.quantita || '1').toString(), posX + 2, y + 6);
         }
-
-        // Quantità
-        pdf.text(it.quantita.toString(), posX + 2, y + 6);
-
-        // nota sotto
-        const testoY = y + rowH - 12;
+      
+        // nota sotto (se esiste)
         if (it.nota) {
           pdf.setFont(undefined, 'italic');
-          pdf.text(
-            'Nota: ' + it.nota,
-            tableX + 1,
-            testoY + 5
-          );
+          pdf.text('Nota: ' + it.nota, tableX + 1, y + rowH - 6);
           pdf.setFont(undefined, 'normal');
         }
-
+      
         y += rowH;
         rowCount++;
-      }
+      }      
 
       // note generali
       if (noteGenerali) {
