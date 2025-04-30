@@ -278,7 +278,7 @@ function App() {
 
       const tableX = 10;
       const rowH = 55;
-      let y = infoY + 30;
+      let y = cursorY + 10;
       let rowCount = 0;
 
       const drawHeaders = () => {
