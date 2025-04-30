@@ -236,33 +236,37 @@ function App() {
       await new Promise(r => (img.onload = r));
       const logoW = 50;
       const logoH = (logoW * img.height) / img.width;
+      const marginTop = 15;
       pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
-      const headerY = 5 + logoH + 2;
+      let cursorY = marginTop + logoH + 2;
       pdf.setFontSize(8);
-      pdf.text('VIA GUIDO ROSSA 184', 10, headerY);
-      pdf.text('62015 MONTE SAN GIUSTO MC', 10, headerY + 4);
-      pdf.text('P.IVA 01251100532', 10, headerY + 8);
-      pdf.text(
+      [
+        'VIA GUIDO ROSSA 184',
+        '62015 MONTE SAN GIUSTO MC',
+        'P.IVA 01251100532',
         'www.emcompany.it   info@emcompany.it',
-        10,
-        headerY + 12
-      );
-      pdf.text(
-        'TEL.+39 0733 539723 FAX +39 0733 837270',
-        10,
-        headerY + 16
-      );
+        'TEL.+39 0733 539723 FAX +39 0733 837270'
+      ].forEach(line => {
+        pdf.text(line, 10, cursorY);
+        cursorY += 4;
+      });
       // cliente
-      const infoY = headerY + 24;
+      cursorY += 4;
       pdf.setFontSize(10);
-      pdf.text(`Cliente: ${cliente}`, 10, infoY);
-      pdf.text(`Banca: ${banca}`, 10, infoY + 6);
-      pdf.text(`Data: ${new Date().toLocaleDateString()}`, 10, infoY + 12);
-      pdf.text(`Corriere: ${corriere}`, 10, infoY + 18);
-      pdf.setFont(undefined, 'bold');
-      pdf.text('RAPPRESENTANTE:', pw - 70, infoY);
-      pdf.text(user?.displayName || '', pw - 70, infoY + 6);
-      pdf.setFont(undefined, 'normal');
+      [
+        `Cliente: ${cliente}`,
+        `Banca: ${banca}`,
+        `Data: ${new Date().toLocaleDateString()}`,
+        `Corriere: ${corriere}`
+      ].forEach(line => {
+        pdf.text(line, 10, cursorY);
+        cursorY += 4;
+      });
+      // rappresentante
+        pdf.setFont(undefined, 'bold');
+        pdf.text('RAPPRESENTANTE:', pw - 70, marginTop + logoH + 2);
+        pdf.text(user?.displayName || '', pw - 70, marginTop + logoH + 8);
+        pdf.setFont(undefined, 'normal');
 
       // colonne dinamiche
       const colW = mostraPrezzi
@@ -356,20 +360,63 @@ function App() {
         posX += colW[1];
 
         // 3) U.M.
-        drawCellText(it.unitaMisura || '', posX, y, colW[2], 7, 2, rowH);
+        drawCellText(
+          it.unitaMisura || '',
+          posX,
+          y,
+          colW[2],
+          7,
+          2,
+          rowH
+        );
         posX += colW[2];
 
         if (mostraPrezzi) {
-          ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione'].forEach((field, idx) => {
-            const text = field.includes('prezzo')
-              ? `€ ${formatPrezzo(it[field])}`
-              : it[field];
-            drawCellText(text, posX, y, colW[3+idx], 7, 2, rowH);
-            posX += colW[3+idx];
-          });
-          drawCellText((it.quantita||'1').toString(), posX, y, colW[7], 8, 2, rowH);
+          ['moqCampione', 'prezzoCampione', 'moqProduzione', 'prezzoProduzione']
+            .forEach((field, idx) => {
+              let text;
+              // per prezzoProduzione, € e importo su due righe
+              if (field === 'prezzoProduzione') {
+                text = `€\n${formatPrezzo(it[field])}`;
+              } else if (field.includes('prezzo')) {
+                text = `€ ${formatPrezzo(it[field])}`;
+              } else {
+                text = it[field];
+              }
+              // font 6.5 pt per i campi prezzo, altrimenti 7 pt
+              const fontSize = field.includes('prezzo') ? 6.5 : 7;
+              drawCellText(
+                text,
+                posX,
+                y,
+                colW[3 + idx],
+                fontSize,
+                2,
+                rowH
+              );
+              posX += colW[3 + idx];
+            });
+
+          // Quantità
+          drawCellText(
+            (it.quantita || 1).toString(),
+            posX,
+            y,
+            colW[7],
+            8,
+            2,
+            rowH
+          );
         } else {
-          drawCellText((it.quantita||'1').toString(), posX, y, colW[3], 8, 2, rowH);
+          drawCellText(
+            (it.quantita || 1).toString(),
+            posX,
+            y,
+            colW[3],
+            8,
+            2,
+            rowH
+          );
         }
 
         // Nota sotto
