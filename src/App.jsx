@@ -441,6 +441,12 @@ function App() {
               </div>
             )}
           </div>
+          {showScrollTop && (
+  <button className="btn-scroll-top" onClick={scrollToTop}>
+    ⬆️
+  </button>
+)}
+
         </>
       )}
     </>
