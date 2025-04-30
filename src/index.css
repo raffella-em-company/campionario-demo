@@ -239,15 +239,29 @@ button:hover {
   font-size: 0.9rem;
   gap: 4px;
 }
+.riga-cella {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  background-color: #ffffff;
+  margin-top: 4px;
+}
+
+.etichetta {
+  font-weight: 600;
+  color: #2c3e50;
+}
 
 .dati-articolo .codice {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #2c3e50;
 }
 
 .dati-articolo .descrizione {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: #555;
   margin-bottom: 4px;
 }
@@ -256,7 +270,7 @@ button:hover {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
 }
 /* ————————————————————————————————
    MEDIA QUERY: TABLET E SUPERIORE
