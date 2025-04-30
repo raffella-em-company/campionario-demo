@@ -271,7 +271,7 @@ const generaPDF = async () => {
       ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
       : [35, 135, 7.5, 7.5];
     const headers = mostraPrezzi
-      ? ['Codice + Descrizione','Immagine','U.M.','MOQ Camp.','Prezzo Camp.','MOQ Prod.','Prezzo Prod.','Q.tà']
+      ? ['Codice + Descrizione','Immagine','U.M.','MOQ\nCamp.','Prezzo\nCamp.','MOQ\nProd.','Prezzo\nProd.','Q.tà']
       : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
     const tableX = 10;
     const rowH = 55;
@@ -281,7 +281,7 @@ const generaPDF = async () => {
     // disegno intestazioni
     const drawHeaders = () => {
       let x = tableX;
-      pdf.setFontSize(7);
+      pdf.setFontSize(6.5);
       pdf.setFont(undefined, 'bold');
       headers.forEach((h, i) => {
         pdf.rect(x, y, colW[i], 8);
