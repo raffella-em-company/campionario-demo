@@ -8,7 +8,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { FaFilePdf, FaPlus, FaTrash, FaArrowUp } from 'react-icons/fa';
 import {signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase-config';
-import { drawCellText } from './utils/pdfHelpers';
 
 const formatPrezzo = val => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'));
@@ -218,6 +217,7 @@ function App() {
   };
 
 // genera PDF
+const marginTop = 15;
 const generaPDF = async () => {
   setIsLoading(true);
   try {
@@ -225,7 +225,6 @@ const generaPDF = async () => {
     const pw = pdf.internal.pageSize.getWidth();
 
     // 1) logo + header
-    const marginTop = 15; // 15mm = 1.5cm
     const logo64 = await loadImageBase64('/logoEM.jpg');
     const img = new Image();
     img.src = '/logoEM.jpg';
