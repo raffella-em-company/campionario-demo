@@ -6,14 +6,9 @@ import jsPDF from 'jspdf';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { FaFilePdf, FaPlus, FaTrash, FaArrowUp } from 'react-icons/fa';
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged
-} from 'firebase/auth';
+import {signInWithPopup, signInWithRedirect, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase-config';
+import { drawCellText } from './utils/pdfHelpers';
 
 const formatPrezzo = val => {
   const parsed = parseFloat((val || '0').toString().replace(',', '.'));
@@ -222,257 +217,176 @@ function App() {
     });
   };
 
-  // genera PDF
-  const generaPDF = async () => {
-    setIsLoading(true);
-    try {
-      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-      const pw = pdf.internal.pageSize.getWidth();
-      const ph = pdf.internal.pageSize.getHeight();
-      // logo + header
-      const logo64 = await loadImageBase64('/logoEM.jpg');
-      const img = new Image();
-      img.src = '/logoEM.jpg';
-      await new Promise(r => (img.onload = r));
-      const logoW = 50;
-      const logoH = (logoW * img.height) / img.width;
-      const marginTop = 15;
-      pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
-      let cursorY = marginTop + logoH + 2;
-      pdf.setFontSize(8);
-      [
-        'VIA GUIDO ROSSA 184',
-        '62015 MONTE SAN GIUSTO MC',
-        'P.IVA 01251100532',
-        'www.emcompany.it   info@emcompany.it',
-        'TEL.+39 0733 539723 FAX +39 0733 837270'
-      ].forEach(line => {
-        pdf.text(line, 10, cursorY);
-        cursorY += 4;
-      });
-      // cliente
+// genera PDF
+const generaPDF = async () => {
+  setIsLoading(true);
+  try {
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pw = pdf.internal.pageSize.getWidth();
+
+    // 1) logo + header
+    const marginTop = 15; // 15mm = 1.5cm
+    const logo64 = await loadImageBase64('/logoEM.jpg');
+    const img = new Image();
+    img.src = '/logoEM.jpg';
+    await new Promise(r => (img.onload = r));
+    const logoW = 50;
+    const logoH = (logoW * img.height) / img.width;
+    pdf.addImage(logo64, 'JPEG', 10, marginTop, logoW, logoH);
+
+    // 2) testo header con interlinea 4mm
+    let cursorY = marginTop + logoH + 2;
+    pdf.setFontSize(8);
+    [
+      'VIA GUIDO ROSSA 184',
+      '62015 MONTE SAN GIUSTO MC',
+      'P.IVA 01251100532',
+      'www.emcompany.it   info@emcompany.it',
+      'TEL.+39 0733 539723 FAX +39 0733 837270'
+    ].forEach(line => {
+      pdf.text(line, 10, cursorY);
       cursorY += 4;
-      pdf.setFontSize(10);
-      [
-        `Cliente: ${cliente}`,
-        `Banca: ${banca}`,
-        `Data: ${new Date().toLocaleDateString()}`,
-        `Corriere: ${corriere}`
-      ].forEach(line => {
-        pdf.text(line, 10, cursorY);
-        cursorY += 4;
+    });
+
+    // 3) blocco cliente/banca/data/corriere
+    cursorY += 4;
+    pdf.setFontSize(10);
+    [
+      `Cliente: ${cliente}`,
+      `Banca: ${banca}`,
+      `Data: ${new Date().toLocaleDateString()}`,
+      `Corriere: ${corriere}`
+    ].forEach(line => {
+      pdf.text(line, 10, cursorY);
+      cursorY += 4;
+    });
+
+    // 4) rappresentante
+    pdf.setFont(undefined, 'bold');
+    pdf.text('RAPPRESENTANTE:', pw - 70, marginTop + logoH + 2);
+    pdf.text(user?.displayName || '', pw - 70, marginTop + logoH + 8);
+    pdf.setFont(undefined, 'normal');
+
+    // 5) preparazione tabella
+    const colW = mostraPrezzi
+      ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
+      : [35, 135, 7.5, 7.5];
+    const headers = mostraPrezzi
+      ? ['Codice + Descrizione','Immagine','U.M.','MOQ Camp.','Prezzo Camp.','MOQ Prod.','Prezzo Prod.','Q.tà']
+      : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
+    const tableX = 10;
+    const rowH = 55;
+    let y = cursorY + 10;
+    let rowCount = 0;
+
+    // disegno intestazioni
+    const drawHeaders = () => {
+      let x = tableX;
+      pdf.setFontSize(7);
+      pdf.setFont(undefined, 'bold');
+      headers.forEach((h, i) => {
+        pdf.rect(x, y, colW[i], 8);
+        pdf.text(h, x + colW[i]/2, y + 5, { align: 'center' });
+        x += colW[i];
       });
-      // rappresentante
-        pdf.setFont(undefined, 'bold');
-        pdf.text('RAPPRESENTANTE:', pw - 70, marginTop + logoH + 2);
-        pdf.text(user?.displayName || '', pw - 70, marginTop + logoH + 8);
-        pdf.setFont(undefined, 'normal');
+      pdf.setFont(undefined, 'normal');
+      y += 8;
+    };
 
-      // colonne dinamiche
-      const colW = mostraPrezzi
-        ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
-        : [35, 135, 7.5, 7.5];
-      const headers = mostraPrezzi
-        ? ['Codice + Descrizione','Immagine','U.M.','MOQ Camp.','Prezzo Camp.','MOQ Prod.','Prezzo Prod.','Q.tà']
-        : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
+    drawHeaders();
 
-      const tableX = 10;
-      const rowH = 55;
-      let y = cursorY + 10;
-      let rowCount = 0;
+    // helper per celle multilinea, centratura verticale e adattamento font
+    const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
+      const rawLines = (text || '').split('\n');
+      let fontSize = initialFontSize;
+      let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+      let lineHeight = fontSize + 1;
+      let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
 
-      const drawHeaders = () => {
-        let x = tableX;
-        pdf.setFontSize(7);
-        pdf.setFont(undefined, 'bold');
-        headers.forEach((h, i) => {
-          pdf.rect(x, y, colW[i], 8);
-          pdf.text(h, x + colW[i] / 2, y + 5, { align: 'center' });
-          x += colW[i];
-        });
-        pdf.setFont(undefined, 'normal');
-        y += 8;
-      };
-
-      // helper migliorato per multilinea con adattamento font
-      const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
-        let fontSize = initialFontSize;
-        let lines = pdf.splitTextToSize(text || '', width - padding * 2);
-        let lineHeight = fontSize + 1;
-        let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
-        
-        while (lines.length > maxLines && fontSize > 5) {
-          fontSize--;
-          lineHeight = fontSize + 1;
-          lines = pdf.splitTextToSize(text || '', width - padding * 2);
-          maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
-        }
-        pdf.setFontSize(fontSize);
-        lines.slice(0, maxLines).forEach((line, i) => {
-          pdf.text(line, x + padding, y + padding + i * lineHeight);
-        });
-      };
-
-      drawHeaders();
-
-      for (const it of proforma) {
-        if (rowCount >= 4) {
-          pdf.addPage();
-          y = 20;
-          drawHeaders();
-          rowCount = 0;
-        }
-
-        let x = tableX;
-        colW.forEach(w => {
-          pdf.rect(x, y, w, rowH);
-          x += w;
-        });
-
-        let posX = tableX;
-
-        // 1) Codice + Descrizione unificati
-        drawCellText(
-          `${it.codice} - ${it.descrizione}`,
-          posX,
-          y,
-          colW[0],
-          8,
-          2,
-          rowH
-        );
-        posX += colW[0];
-
-        // 2) Immagine
-        {
-          const { base64, width, height } = await resizeImageSafe(it.immagine);
-          let iw = width, ih = height;
-          const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
-          iw *= scale; ih *= scale;
-          const ext = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
-          pdf.addImage(
-            base64, ext,
-            posX + (colW[1] - iw) / 2,
-            y    + (rowH - ih) / 2,
-            iw, ih
-          );
-        }
-        posX += colW[1];
-
-        // 3) U.M.
-        drawCellText(
-          it.unitaMisura || '',
-          posX,
-          y,
-          colW[2],
-          7,
-          2,
-          rowH
-        );
-        posX += colW[2];
-
-        if (mostraPrezzi) {
-          ['moqCampione', 'prezzoCampione', 'moqProduzione', 'prezzoProduzione']
-            .forEach((field, idx) => {
-              let text;
-              // per prezzoProduzione, € e importo su due righe
-              if (field === 'prezzoProduzione') {
-                text = `€\n${formatPrezzo(it[field])}`;
-              } else if (field.includes('prezzo')) {
-                text = `€ ${formatPrezzo(it[field])}`;
-              } else {
-                text = it[field];
-              }
-              // font 6.5 pt per i campi prezzo, altrimenti 7 pt
-              const fontSize = field.includes('prezzo') ? 6.5 : 7;
-              drawCellText(
-                text,
-                posX,
-                y,
-                colW[3 + idx],
-                fontSize,
-                2,
-                rowH
-              );
-              posX += colW[3 + idx];
-            });
-
-          // Quantità
-          drawCellText(
-            (it.quantita || 1).toString(),
-            posX,
-            y,
-            colW[7],
-            8,
-            2,
-            rowH
-          );
-        } else {
-          drawCellText(
-            (it.quantita || 1).toString(),
-            posX,
-            y,
-            colW[3],
-            8,
-            2,
-            rowH
-          );
-        }
-
-        // Nota sotto
-        if (it.nota) {
-          pdf.setFont(undefined, 'italic');
-          drawCellText(
-            'Nota: ' + it.nota,
-            tableX,
-            y + rowH - 12,
-            pw - 20,
-            7,
-            2,
-            12
-          );
-          pdf.setFont(undefined, 'normal');
-        }
-
-        y += rowH;
-        rowCount++;
+      while (lines.length > maxLines && fontSize > 5) {
+        fontSize -= 0.5;
+        lineHeight = fontSize + 1;
+        lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+        maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
       }
 
-      pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Errore generazione PDF', {
-        position: 'top-right'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
+      const offsetY = (availableHeight - usedHeight) / 2;
 
-  const confermaRimuovi = i => {
-    toast(
-      ({ closeToast }) => (
-        <div className="toast-conferma-rimozione">
-          <p>Rimuovere questo articolo?</p>
-          <div className="toast-bottoni">
-            <button
-              className="btn-rimuovi"
-              onClick={() => {
-                rimuoviDaProforma(i);
-                closeToast();
-              }}
-            >
-              Sì
-            </button>
-            <button className="btn-annulla" onClick={closeToast}>
-              No
-            </button>
-          </div>
-        </div>
-      ),
-      { position: 'top-center', autoClose: false, closeButton: false }
-    );
-  };
+      pdf.setFontSize(fontSize);
+      lines.slice(0, maxLines).forEach((line, i) => {
+        pdf.text(line, x + padding, y + offsetY + padding + i * lineHeight);
+      });
+    };
+
+    // 6) ciclo righe
+    for (const it of proforma) {
+      if (rowCount >= 4) {
+        pdf.addPage();
+        y = 20;
+        drawHeaders();
+        rowCount = 0;
+      }
+
+      // disegno griglia
+      let x = tableX;
+      colW.forEach(w => { pdf.rect(x, y, w, rowH); x += w; });
+
+      let posX = tableX;
+
+      // Codice + descrizione
+      drawCellText(`${it.codice} - ${it.descrizione}`, posX, y, colW[0], 8, 2, rowH);
+      posX += colW[0];
+
+      // Immagine
+      {
+        const { base64, width, height } = await resizeImageSafe(it.immagine);
+        let iw = width, ih = height;
+        const scale = Math.min((colW[1]-4)/iw, (rowH-10)/ih);
+        iw *= scale; ih *= scale;
+        const ext = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
+        pdf.addImage(base64, ext, posX + (colW[1]-iw)/2, y + (rowH-ih)/2, iw, ih);
+      }
+      posX += colW[1];
+
+      // U.M.
+      drawCellText(it.unitaMisura || '', posX, y, colW[2], 7, 2, rowH);
+      posX += colW[2];
+
+      // prezzi e quantità
+      if (mostraPrezzi) {
+        ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione'].forEach((field, idx) => {
+          let text = field.includes('prezzo')
+            ? `€\n${formatPrezzo(it[field])}`
+            : it[field];
+          const fontSize = field.includes('prezzo') ? 6.5 : 7;
+          drawCellText(text, posX, y, colW[3+idx], fontSize, 2, rowH);
+          posX += colW[3+idx];
+        });
+        drawCellText((it.quantita||1).toString(), posX, y, colW[7], 8, 2, rowH);
+      } else {
+        drawCellText((it.quantita||1).toString(), posX, y, colW[3], 8, 2, rowH);
+      }
+
+      // nota eventualmente
+      if (it.nota) {
+        pdf.setFont(undefined, 'italic');
+        drawCellText('Nota: ' + it.nota, tableX, y + rowH - 12, pw - 20, 7, 2, 12);
+        pdf.setFont(undefined, 'normal');
+      }
+
+      y += rowH;
+      rowCount++;
+    }
+
+    pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`);
+  } catch (e) {
+    console.error(e);
+    toast.error('Errore generazione PDF', { position: 'top-right' });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <>
