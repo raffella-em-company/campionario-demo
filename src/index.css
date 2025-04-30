@@ -230,7 +230,18 @@ button:hover {
 .btn-scroll-top:hover {
   background-color: #63b3ed;
 }
+/* ————————————————————————————————
+   Dati su schermata articoli selezionati
+———————————————————————————————— */
+.dati-articolo {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+}
 
+.dati-articolo p {
+  margin: 2px 0;
+}
 /* ————————————————————————————————
    MEDIA QUERY: TABLET E SUPERIORE
 ———————————————————————————————— */
