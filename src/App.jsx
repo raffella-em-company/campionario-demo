@@ -123,9 +123,18 @@ function App() {
         toast.error('Accesso consentito solo a email @emcompany.it', { position: 'top-right' });
       }
     } catch (e) {
-      toast.error('Login fallito: ' + e.message, { position: 'top-right' });
+      if (e.code === 'auth/popup-blocked') {
+        toast.info('Popup bloccato, uso login alternativo...', { position: 'top-right' });
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectErr) {
+          toast.error('Login redirect fallito: ' + redirectErr.message, { position: 'top-right' });
+        }
+      } else {
+        toast.error('Login fallito: ' + e.message, { position: 'top-right' });
+      }
     }
-  };
+  };  
 
   const logout = () => signOut(auth);
 
