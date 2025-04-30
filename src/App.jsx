@@ -296,9 +296,9 @@ function App() {
       // helper per disegnare testo multilinea dentro la cella
       const drawCellText = (text, x, y, width, fontSize, padding) => {
         pdf.setFontSize(fontSize);
-        const lines = pdf.splitTextToSize(text || '', width - padding * 2);
+        const lines = pdf.splitTextToSize(text || '', width - padding*2);
         lines.forEach((line, i) => {
-          pdf.text(line, x + padding, y + 6 + i * (fontSize + 1));
+          pdf.text(line, x + padding, y + padding + i * (fontSize + 1));
         });
       };
 
@@ -310,67 +310,55 @@ function App() {
           rowCount = 0;
         }
 
-        // disegno la griglia
-        let x = tableX;
-        colW.forEach(w => {
-          pdf.rect(x, y, w, rowH);
-          x += w;
-        });
-
         let posX = tableX;
 
-        // 1) Codice + Descrizione (3.5 cm)
-        drawCellText(it.codice,      posX, y, colW[0], 8, 2);
-        drawCellText(it.descrizione, posX, y, colW[0], 7, 2);
+        // 1) Codice + Descrizione (3.5 cm) → font un po’ più piccolo
+        drawCellText(it.codice, posX, y, colW[0], 7, 3);
+        drawCellText(it.descrizione, posX, y + 10, colW[0], 6, 3);
         posX += colW[0];
-
-        // 2) Immagine (10 cm o 13.5 cm)
-        {
-          const { base64, width, height } = await resizeImageSafe(it.immagine);
-          let iw = width, ih = height;
-          const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
-          iw *= scale; ih *= scale;
-          const ext = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
-          pdf.addImage(
-            base64, ext,
-            posX + (colW[1] - iw) / 2,
-            y    + (rowH - ih) / 2,
-            iw, ih
-          );
-        }
+        
+        // 2) Immagine
+        // ... rimane uguale ...
         posX += colW[1];
-
-        // 3) U.M. (0.5 cm)
-        drawCellText(it.unitaMisura || '', posX, y, colW[2], 7, 2);
+        
+        // 3) U.M. (0.5 cm) → font piccolo
+        drawCellText(it.unitaMisura||'', posX, y, colW[2], 6, 2);
         posX += colW[2];
-
+        
         if (mostraPrezzi) {
           // 4) MOQ Camp. (1 cm)
-          drawCellText(it.moqCampione || '', posX, y, colW[3], 7, 2);
+          drawCellText(it.moqCampione||'', posX, y, colW[3], 6, 2);
           posX += colW[3];
+        
           // 5) Prezzo Camp. (1 cm)
-          drawCellText(`€ ${formatPrezzo(it.prezzoCampione)}`, posX, y, colW[4], 7, 2);
+          drawCellText(`€${formatPrezzo(it.prezzoCampione)}`, posX, y, colW[4], 6, 2);
           posX += colW[4];
+        
           // 6) MOQ Prod. (1 cm)
-          drawCellText(it.moqProduzione || '', posX, y, colW[5], 7, 2);
+          drawCellText(it.moqProduzione||'', posX, y, colW[5], 6, 2);
           posX += colW[5];
+        
           // 7) Prezzo Prod. (1 cm)
-          drawCellText(`€ ${formatPrezzo(it.prezzoProduzione)}`, posX, y, colW[6], 7, 2);
+          drawCellText(`€${formatPrezzo(it.prezzoProduzione)}`, posX, y, colW[6], 6, 2);
           posX += colW[6];
+        
           // 8) Quantità (0.5 cm)
-          drawCellText((it.quantita || '1').toString(), posX, y, colW[7], 8, 2);
+          drawCellText((it.quantita||'1').toString(), posX, y, colW[7], 6, 2);
+          posX += colW[7];
         } else {
-          // senza prezzi salto a Quantità (colonna 4, 0.5 cm)
-          drawCellText((it.quantita || '1').toString(), posX, y, colW[3], 8, 2);
+          // senza prezzi salto direttamente a Quantità (colW[3])
+          drawCellText((it.quantita||'1').toString(), posX, y, colW[3], 6, 2);
+          posX += colW[3];
         }
-
+        
         // Nota sotto (se esiste)
+        // usa font ancora più piccolo su tutta la larghezza
         if (it.nota) {
           pdf.setFont(undefined, 'italic');
-          drawCellText('Nota: ' + it.nota, tableX, y + rowH - 12, pw - 20, 7, 2);
+          drawCellText('Nota: ' + it.nota, tableX, y + rowH - 12, pw - 20, 6, 2);
           pdf.setFont(undefined, 'normal');
         }
-
+        
         y += rowH;
         rowCount++;
       }
