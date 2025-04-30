@@ -424,17 +424,21 @@ function App() {
                 <ul>
                   {proforma.map((it, i) => (
                     <li key={it.codice} onContextMenu={e => { e.preventDefault(); confermaRimuovi(i); }}>
-                    <div className="info">
-                      <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
-                      <div className="dati-articolo">
-                        <strong>{it.codice}</strong>
-                        <p>{it.descrizione}</p>
-                        <p>MOQ Campione: {it.moqCampione || '—'}</p>
-                        <p>Prezzo Campione: € {formatPrezzo(it.prezzoCampione)}</p>
-                        <p>MOQ Produzione: {it.moqProduzione || '—'}</p>
-                        <p>Prezzo Produzione: € {formatPrezzo(it.prezzoProduzione)}</p>
+                      <div className="info">
+                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
+                        <div className="dati-articolo">
+                          <div className="codice"><strong>{it.codice}</strong></div>
+                          <div className="descrizione">{it.descrizione}</div>
+                          <div className="righe">
+                            <span>MOQ Camp.: {it.moqCampione || '—'}</span>
+                            <span>Prezzo Camp.: € {formatPrezzo(it.prezzoCampione)}</span>
+                          </div>
+                          <div className="righe">
+                            <span>MOQ Prod.: {it.moqProduzione || '—'}</span>
+                            <span>Prezzo Prod.: € {formatPrezzo(it.prezzoProduzione)}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
                       <textarea
                         placeholder="Nota su questo articolo..."
                         value={it.nota}
