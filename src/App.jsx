@@ -234,7 +234,7 @@ function App() {
       const img = new Image();
       img.src = '/logoEM.jpg';
       await new Promise(r => (img.onload = r));
-      const logoW = 40;
+      const logoW = 50;
       const logoH = (logoW * img.height) / img.width;
       pdf.addImage(logo64, 'JPEG', 10, 5, logoW, logoH);
       const headerY = 5 + logoH + 2;
@@ -266,8 +266,8 @@ function App() {
 
       // colonne dinamiche
       const colW = mostraPrezzi
-        ? [35, 100, 5, 10, 10, 10, 10, 5]
-        : [35, 135, 5, 5];
+        ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
+        : [35, 135, 7.5, 7.5];
       const headers = mostraPrezzi
         ? ['Codice + Descrizione','Immagine','U.M.','MOQ Camp.','Prezzo Camp.','MOQ Prod.','Prezzo Prod.','Q.tà']
         : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
@@ -279,7 +279,7 @@ function App() {
 
       const drawHeaders = () => {
         let x = tableX;
-        pdf.setFontSize(8);
+        pdf.setFontSize(7);
         pdf.setFont(undefined, 'bold');
         headers.forEach((h, i) => {
           pdf.rect(x, y, colW[i], 8);
