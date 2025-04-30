@@ -241,13 +241,13 @@ button:hover {
 }
 
 .dati-articolo .codice {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #2c3e50;
 }
 
 .dati-articolo .descrizione {
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   color: #555;
   margin-bottom: 4px;
 }
@@ -256,7 +256,7 @@ button:hover {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 /* ————————————————————————————————
    MEDIA QUERY: TABLET E SUPERIORE
