@@ -92,7 +92,10 @@ function App() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);  
+  }, []); 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };  
 
   // --- Caricamento CSV ---
   useEffect(() => {
@@ -452,7 +455,7 @@ function App() {
           </div>
           {showScrollTop && (
           <button className="btn-scroll-top" onClick={scrollToTop}>
-            ⬆️
+            <FaArrowUp />
           </button>
         )}
         </>
