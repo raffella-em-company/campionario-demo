@@ -281,9 +281,9 @@ const generaPDF = async () => {
    // Altezza header aumentata a 15 mm, padding interno 2 mm
     const drawHeaders = () => {
       let x = tableX;
-      const headerFont = 6.5;
-      const headerHeight = 15;  // ora 15 mm invece di 10
-      const pad = 2;            // 2 mm padding interno
+      const headerFont = 7;
+      const headerHeight = 10;  // ora 15 mm invece di 10
+      const pad = 1.5;            // 2 mm padding interno
 
       pdf.setFontSize(headerFont);
       pdf.setFont(undefined, 'bold');
@@ -317,7 +317,7 @@ const generaPDF = async () => {
       const rawLines = (text || '').split('\n');
       let fontSize = initialFontSize;
       let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-      let lineHeight = fontSize + 1;
+      let lineHeight = fontSize + 0.5;
       let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
 
       while (lines.length > maxLines && fontSize > 5) {
@@ -338,11 +338,13 @@ const generaPDF = async () => {
 
     // 6) ciclo righe
     for (const it of proforma) {
-      if (rowCount >= 4) {
+      // se non ci sta più questa riga nella pagina corrente:
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const bottomMargin = 20;
+      if (y + rowH > pageHeight - bottomMargin) {
         pdf.addPage();
-        y = 20;
+        y = 20;            // reset inizio riga sulla nuova pagina
         drawHeaders();
-        rowCount = 0;
       }
 
       // disegno griglia
