@@ -267,8 +267,8 @@ function App() {
 
       // colonne dinamiche
       const colW = mostraPrezzi
-        ? [40, 100, 10, 15, 18, 15, 18, 10]
-        : [40, 100, 10, 15, 15, 10];
+      ? [35, 100, 5, 10, 10, 10, 10, 5]
+      : [35, 100, 5, 10, /*MOQ Prod.*/10, /*Q.tà*/5];
       const headers = mostraPrezzi
         ? [
             'Codice + Descrizione',
