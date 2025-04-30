@@ -80,10 +80,19 @@ function App() {
   const [noteGenerali, setNoteGenerali] = useState(saved.noteGenerali || '');
   const [popupImg, setPopupImg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('appState', JSON.stringify({ proforma, cliente, banca, corriere, noteGenerali }));
   }, [proforma, cliente, banca, corriere, noteGenerali]);  
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);  
 
   // --- Caricamento CSV ---
   useEffect(() => {
@@ -442,11 +451,10 @@ function App() {
             )}
           </div>
           {showScrollTop && (
-  <button className="btn-scroll-top" onClick={scrollToTop}>
-    ⬆️
-  </button>
-)}
-
+          <button className="btn-scroll-top" onClick={scrollToTop}>
+            ⬆️
+          </button>
+        )}
         </>
       )}
     </>
