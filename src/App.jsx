@@ -278,18 +278,36 @@ const generaPDF = async () => {
     let y = cursorY + 10;
     let rowCount = 0;
 
-    // disegno intestazioni
+   // Altezza header aumentata a 15 mm, padding interno 2 mm
     const drawHeaders = () => {
       let x = tableX;
-      pdf.setFontSize(6.5);
+      const headerFont = 6.5;
+      const headerHeight = 15;  // ora 15 mm invece di 10
+      const pad = 2;            // 2 mm padding interno
+
+      pdf.setFontSize(headerFont);
       pdf.setFont(undefined, 'bold');
+
       headers.forEach((h, i) => {
-        pdf.rect(x, y, colW[i], 8);
-        pdf.text(h, x + colW[i]/2, y + 5, { align: 'center' });
+        const lines = pdf.splitTextToSize(h, colW[i] - pad * 2);
+        const usedH = lines.length * (headerFont + 1);
+        const offsetY = (headerHeight - usedH) / 2;
+
+        pdf.rect(x, y, colW[i], headerHeight);
+
+        lines.forEach((line, idx) => {
+          pdf.text(
+            line,
+            x + pad,
+            y + offsetY + pad + idx * (headerFont + 1)
+          );
+        });
+
         x += colW[i];
       });
+
       pdf.setFont(undefined, 'normal');
-      y += 8;
+      y += headerHeight;
     };
 
     drawHeaders();
@@ -348,23 +366,32 @@ const generaPDF = async () => {
       }
       posX += colW[1];
 
-      // U.M.
-      drawCellText(it.unitaMisura || '', posX, y, colW[2], 7, 2, rowH);
+      // U.M. con padding 1 mm e font 6.5 pt
+      drawCellText(it.unitaMisura || '', posX, y, colW[2], 6.5, 1, rowH);
       posX += colW[2];
 
-      // prezzi e quantità
+      // prezzi e quantità con padding 1 mm, font 6 pt per prezzi e 6.5 pt per gli altri
       if (mostraPrezzi) {
-        ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione'].forEach((field, idx) => {
-          let text = field.includes('prezzo')
-            ? `€\n${formatPrezzo(it[field])}`
-            : it[field];
-          const fontSize = field.includes('prezzo') ? 6.5 : 7;
-          drawCellText(text, posX, y, colW[3+idx], fontSize, 2, rowH);
-          posX += colW[3+idx];
-        });
-        drawCellText((it.quantita||1).toString(), posX, y, colW[7], 8, 2, rowH);
+        // moqCampione, prezzoCampione, moqProduzione, prezzoProduzione
+        ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione','quantita']
+          .forEach((field, idx) => {
+            let text;
+            if (field === 'quantita') {
+              text = (it.quantita || 1).toString();
+            } else if (field.includes('prezzo')) {
+              text = `€\n${formatPrezzo(it[field])}`;
+            } else {
+              text = it[field];
+            }
+            const fontSize = field.includes('prezzo') ? 6 : 6.5;
+            const width = idx < 4 ? colW[3 + idx] : colW[7];
+
+            drawCellText(text, posX, y, width, fontSize, 1, rowH);
+            posX += width;
+          });
       } else {
-        drawCellText((it.quantita||1).toString(), posX, y, colW[3], 8, 2, rowH);
+        // solo quantità
+        drawCellText((it.quantita || 1).toString(), posX, y, colW[3], 6.5, 1, rowH);
       }
 
       // nota eventualmente
