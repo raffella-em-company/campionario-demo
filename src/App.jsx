@@ -276,43 +276,35 @@ const generaPDF = async () => {
     const tableX = 10;
     const rowH = 55;
     let y = cursorY + 10;
-    let rowCount = 0;
 
-   // Altezza header aumentata a 15 mm, padding interno 2 mm
+    // disegno intestazioni (15 mm height, padding 2 mm)
     const drawHeaders = () => {
       let x = tableX;
       const headerFont = 7;
-      const headerHeight = 10;  // ora 15 mm invece di 10
-      const pad = 1.5;            // 2 mm padding interno
+      const headerHeight = 15;
+      const pad = 2;
 
       pdf.setFontSize(headerFont);
       pdf.setFont(undefined, 'bold');
 
       headers.forEach((h, i) => {
         const lines = pdf.splitTextToSize(h, colW[i] - pad * 2);
-        const usedH = lines.length * (headerFont + 1);
+        const usedH = lines.length * (headerFont + 0.5);
         const offsetY = (headerHeight - usedH) / 2;
 
         pdf.rect(x, y, colW[i], headerHeight);
-
         lines.forEach((line, idx) => {
-          pdf.text(
-            line,
-            x + pad,
-            y + offsetY + pad + idx * (headerFont + 1)
-          );
+          pdf.text(line, x + pad, y + offsetY + pad + idx * (headerFont + 0.5));
         });
-
         x += colW[i];
       });
 
       pdf.setFont(undefined, 'normal');
       y += headerHeight;
     };
-
     drawHeaders();
 
-    // helper per celle multilinea, centratura verticale e adattamento font
+    // helper unico per tutte le celle (lineHeight = fontSize + 0.5, padding variabile)
     const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
       const rawLines = (text || '').split('\n');
       let fontSize = initialFontSize;
@@ -336,14 +328,12 @@ const generaPDF = async () => {
       });
     };
 
-    // 6) ciclo righe
+    // 6) ciclo righe con controllo di avanzamento pagina
     for (const it of proforma) {
-      // se non ci sta più questa riga nella pagina corrente:
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const bottomMargin = 20;
-      if (y + rowH > pageHeight - bottomMargin) {
+      if (y + rowH > pageHeight - 20) {
         pdf.addPage();
-        y = 20;            // reset inizio riga sulla nuova pagina
+        y = marginTop;
         drawHeaders();
       }
 
@@ -353,7 +343,7 @@ const generaPDF = async () => {
 
       let posX = tableX;
 
-      // Codice + descrizione
+      // Codice + Descrizione
       drawCellText(`${it.codice} - ${it.descrizione}`, posX, y, colW[0], 8, 2, rowH);
       posX += colW[0];
 
@@ -361,42 +351,36 @@ const generaPDF = async () => {
       {
         const { base64, width, height } = await resizeImageSafe(it.immagine);
         let iw = width, ih = height;
-        const scale = Math.min((colW[1]-4)/iw, (rowH-10)/ih);
+        const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
         iw *= scale; ih *= scale;
         const ext = it.immagine.toLowerCase().includes('.png') ? 'PNG' : 'JPEG';
-        pdf.addImage(base64, ext, posX + (colW[1]-iw)/2, y + (rowH-ih)/2, iw, ih);
+        pdf.addImage(base64, ext, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
       }
       posX += colW[1];
 
-      // U.M. con padding 1 mm e font 6.5 pt
-      drawCellText(it.unitaMisura || '', posX, y, colW[2], 6.5, 1, rowH);
+      // U.M.
+      drawCellText(it.unitaMisura||'', posX, y, colW[2], 6.5, 1, rowH);
       posX += colW[2];
 
-      // prezzi e quantità con padding 1 mm, font 6 pt per prezzi e 6.5 pt per gli altri
+      // prezzi e quantità
       if (mostraPrezzi) {
-        // moqCampione, prezzoCampione, moqProduzione, prezzoProduzione
         ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione','quantita']
           .forEach((field, idx) => {
-            let text;
-            if (field === 'quantita') {
-              text = (it.quantita || 1).toString();
-            } else if (field.includes('prezzo')) {
-              text = `€\n${formatPrezzo(it[field])}`;
-            } else {
-              text = it[field];
-            }
+            const text = field === 'quantita'
+              ? (it.quantita||1).toString()
+              : field.includes('prezzo')
+                ? `€\n${formatPrezzo(it[field])}`
+                : it[field];
             const fontSize = field.includes('prezzo') ? 6 : 6.5;
-            const width = idx < 4 ? colW[3 + idx] : colW[7];
-
-            drawCellText(text, posX, y, width, fontSize, 1, rowH);
-            posX += width;
+            const w = idx < 4 ? colW[3 + idx] : colW[7];
+            drawCellText(text, posX, y, w, fontSize, 1, rowH);
+            posX += w;
           });
       } else {
-        // solo quantità
-        drawCellText((it.quantita || 1).toString(), posX, y, colW[3], 6.5, 1, rowH);
+        drawCellText((it.quantita||1).toString(), posX, y, colW[3], 6.5, 1, rowH);
       }
 
-      // nota eventualmente
+      // nota (se presente)
       if (it.nota) {
         pdf.setFont(undefined, 'italic');
         drawCellText('Nota: ' + it.nota, tableX, y + rowH - 12, pw - 20, 7, 2, 12);
@@ -404,7 +388,6 @@ const generaPDF = async () => {
       }
 
       y += rowH;
-      rowCount++;
     }
 
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`);
