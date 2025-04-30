@@ -37,7 +37,7 @@ const resizeImageSafe = async (src) => {
           const useCanvas = img.width > 1500 || img.height > 1500;
           if (useCanvas) {
             const canvas = document.createElement('canvas');
-            const scale = 0.5; // riduce la risoluzione del 50%
+            const scale = 0.3;
             canvas.width = img.width * scale;
             canvas.height = img.height * scale;
             const ctx = canvas.getContext('2d');
@@ -45,7 +45,7 @@ const resizeImageSafe = async (src) => {
             ctx.imageSmoothingQuality = 'medium';
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             resolve({
-              base64: canvas.toDataURL('image/jpeg', 0.7), // compressione controllata
+              base64: canvas.toDataURL('image/jpeg', 0.8),
               width: canvas.width,
               height: canvas.height
             });
@@ -424,12 +424,17 @@ function App() {
                 <ul>
                   {proforma.map((it, i) => (
                     <li key={it.codice} onContextMenu={e => { e.preventDefault(); confermaRimuovi(i); }}>
-                      <div className="info">
-                        <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
-                        <span>{it.codice}</span>
-                        <span>Camp.: € {formatPrezzo(it.prezzoCampione)}</span>
-                        <span>Ric.: % {formatPrezzo(it.ricarico)}</span>
+                    <div className="info">
+                      <img src={it.immagine} alt={it.codice} className="thumb" onClick={() => setPopupImg(it.immagine)} />
+                      <div className="dati-articolo">
+                        <strong>{it.codice}</strong>
+                        <p>{it.descrizione}</p>
+                        <p>MOQ Campione: {it.moqCampione || '—'}</p>
+                        <p>Prezzo Campione: € {formatPrezzo(it.prezzoCampione)}</p>
+                        <p>MOQ Produzione: {it.moqProduzione || '—'}</p>
+                        <p>Prezzo Produzione: € {formatPrezzo(it.prezzoProduzione)}</p>
                       </div>
+                    </div>
                       <textarea
                         placeholder="Nota su questo articolo..."
                         value={it.nota}
