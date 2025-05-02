@@ -254,12 +254,30 @@ const generaPDF = async () => {
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    // fattore interlinea (usato internamente e da getLineHeightFactor)
-    pdf.setLineHeightFactor(1.0);
+    pdf.setLineHeightFactor(0.9);
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
 
-    // 1) logo + header
+    const drawCellText = (text, x, y, width, height, fontSize, padding) => {
+      pdf.setFont(undefined, 'normal');
+      pdf.setFontSize(fontSize);
+      const effW = width - 2 * padding;
+      const lines = pdf.splitTextToSize(text || '', effW);
+      const lineH = pdf.internal.getLineHeightFactor() * fontSize;
+      const maxLines = Math.floor((height - 2 * padding) / lineH);
+      const drawn = lines.slice(0, maxLines);
+      const usedH = drawn.length * lineH;
+      const offsetY = (height - usedH) / 2;
+      drawn.forEach((ln, i) => {
+        pdf.text(
+          ln,
+          x + padding,
+          y + padding + offsetY + i * lineH,
+          { baseline: 'top', maxWidth: effW }
+        );
+      });
+    };
+
     const logo64 = await loadImageBase64('/logoEM.jpg');
     const img = new Image();
     img.src = '/logoEM.jpg';
@@ -268,7 +286,6 @@ const generaPDF = async () => {
     const logoH = (logoW * img.height) / img.width;
     pdf.addImage(logo64, 'JPEG', 10, marginTop, logoW, logoH);
 
-    // 2) testo header
     let cursorY = marginTop + logoH + 2;
     pdf.setFontSize(8);
     [
@@ -282,7 +299,6 @@ const generaPDF = async () => {
       cursorY += 4;
     });
 
-    // 3) Cliente / Banca / Data / Corriere
     cursorY += 4;
     pdf.setFontSize(10);
     [
@@ -295,13 +311,11 @@ const generaPDF = async () => {
       cursorY += 4;
     });
 
-    // 4) Rappresentante
     pdf.setFont(undefined, 'bold');
     pdf.text('RAPPRESENTANTE:', pw - 70, marginTop + logoH + 2);
     pdf.text(user?.displayName || '', pw - 70, marginTop + logoH + 8);
     pdf.setFont(undefined, 'normal');
 
-    // 5) Intestazioni tabella
     const colW = mostraPrezzi
       ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
       : [35, 135, 7.5, 7.5];
@@ -311,34 +325,9 @@ const generaPDF = async () => {
     const tableX = 10;
     const rowH = 55;
     let yRef = { value: cursorY + 10 };
-
     drawHeaders(pdf, headers, colW, tableX, yRef);
     let y = yRef.value;
 
-    // helper unico: wrap + centratura verticale + max lines
-    const drawCellText = (rawText, x, yCell, width, rowHeight, fontSize, padding) => {
-      pdf.setFont(undefined, 'normal');
-      const text = (rawText || '').replace(/([_\-/])/g, '$1\u200B');
-      const effW = width - 2 * padding;
-      pdf.setFontSize(fontSize);
-      pdf.setLineHeightFactor(0.8);
-      let lines = pdf.splitTextToSize(text, effW);
-      const lineH = pdf.internal.getLineHeightFactor() * fontSize;
-      const maxLines = Math.floor((rowHeight - 2 * padding) / lineH);
-      if (lines.length > maxLines) lines = lines.slice(0, maxLines);
-      const usedH = lines.length * lineH;
-      const offsetY = (rowHeight - usedH) / 2;
-      lines.forEach((ln, i) => {
-        pdf.text(
-          ln,
-          x + padding,
-          yCell + padding + offsetY + i * lineH,
-          { baseline: 'top', maxWidth: effW }
-        );
-      });
-    };
-
-    // 6) ciclo righe proforma con avanzamento pagina
     for (const it of proforma) {
       if (y + rowH > ph - 20) {
         pdf.addPage();
@@ -347,41 +336,26 @@ const generaPDF = async () => {
         y = yRef.value;
       }
 
-      // disegno celle
       let x = tableX;
       colW.forEach(w => { pdf.rect(x, y, w, rowH); x += w; });
       let posX = tableX;
 
-      // Codice + Descrizione
-      drawCellText(
-        `${it.codice} - ${it.descrizione}`,
-        posX, y,
-        colW[0], rowH,
-        8, 2
-      );
+      drawCellText(`${it.codice} - ${it.descrizione}`, posX, y, colW[0], rowH, 8, 2);
       posX += colW[0];
 
-      // Immagine
       {
         const { base64, width, height } = await resizeImageSafe(it.immagine);
         let iw = width, ih = height;
         const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
         iw *= scale; ih *= scale;
         const ext = it.immagine.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG';
-        pdf.addImage(
-          base64, ext,
-          posX + (colW[1] - iw) / 2,
-          y + (rowH - ih) / 2,
-          iw, ih
-        );
+        pdf.addImage(base64, ext, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
       }
       posX += colW[1];
 
-      // U.M.
       drawCellText(it.unitaMisura || '', posX, y, colW[2], rowH, 6.5, 1);
       posX += colW[2];
 
-      // Prezzi / Q.tà
       if (mostraPrezzi) {
         ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione','quantita']
           .forEach((field, idx) => {
@@ -391,7 +365,7 @@ const generaPDF = async () => {
                 ? `€ ${formatPrezzo(it[field])}`
                 : it[field];
             const fs = field.includes('prezzo') ? 6 : 6.5;
-            const w  = idx < 4 ? colW[3 + idx] : colW[7];
+            const w = idx < 4 ? colW[3 + idx] : colW[7];
             drawCellText(txt, posX, y, w, rowH, fs, 1);
             posX += w;
           });
@@ -399,22 +373,15 @@ const generaPDF = async () => {
         drawCellText(String(it.quantita || 1), posX, y, colW[3], rowH, 6.5, 1);
       }
 
-      // Nota articolo
       if (it.nota) {
         pdf.setFont(undefined, 'italic');
-        drawCellText(
-          'Nota: ' + it.nota,
-          tableX, y + rowH - 12,
-          pw - 20, 12,
-          7, 2
-        );
+        drawCellText('Nota: ' + it.nota, tableX, y + rowH - 12, pw - 20, 12, 7, 2);
         pdf.setFont(undefined, 'normal');
       }
 
       y += rowH;
     }
 
-    // Note generali
     if (noteGenerali) {
       if (y + 20 > ph - 20) {
         pdf.addPage();
@@ -431,9 +398,7 @@ const generaPDF = async () => {
       });
     }
 
-    // salva
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`);
-
   } catch (e) {
     console.error(e);
     toast.error('Errore generazione PDF', { position: 'top-right' });
@@ -441,6 +406,7 @@ const generaPDF = async () => {
     setIsLoading(false);
   }
 };
+
 
   return (
     <>
