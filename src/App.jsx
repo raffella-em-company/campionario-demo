@@ -254,7 +254,8 @@ const generaPDF = async () => {
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    pdf.setLineHeightFactor(0.9);
+    // fattore interlinea (usato internamente e da getLineHeightFactor)
+    pdf.setLineHeightFactor(1.0);
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
 
@@ -281,7 +282,7 @@ const generaPDF = async () => {
       cursorY += 4;
     });
 
-    // 3) cliente / banca / data / corriere
+    // 3) Cliente / Banca / Data / Corriere
     cursorY += 4;
     pdf.setFontSize(10);
     [
@@ -294,13 +295,13 @@ const generaPDF = async () => {
       cursorY += 4;
     });
 
-    // 4) rappresentante
+    // 4) Rappresentante
     pdf.setFont(undefined, 'bold');
     pdf.text('RAPPRESENTANTE:', pw - 70, marginTop + logoH + 2);
     pdf.text(user?.displayName || '', pw - 70, marginTop + logoH + 8);
     pdf.setFont(undefined, 'normal');
 
-    // 5) intestazioni tabella
+    // 5) Intestazioni tabella
     const colW = mostraPrezzi
       ? [35, 100, 7.5, 10, 10, 10, 10, 7.5]
       : [35, 135, 7.5, 7.5];
@@ -314,29 +315,41 @@ const generaPDF = async () => {
     drawHeaders(pdf, headers, colW, tableX, yRef);
     let y = yRef.value;
 
-    // helper unico: wrap + centratura verticale
-    const drawCellText = (text, x, yCell, width, rowHeight, fontSize, padding) => {
-      const effectiveWidth = width - 2 * padding;
+    // === helper: wrap + centratura verticale + max lines ===
+    const drawCellText = (rawText, x, yCell, width, rowHeight, fontSize, padding) => {
+      // 1) permetto la rottura su "-" anche senza spazi
+      const text = (rawText || '').replace(/-/g, '-\u200B');
+      const effW = width - 2 * padding;
       pdf.setFontSize(fontSize);
-      // splitto in base alla larghezza
-      const lines = pdf.splitTextToSize(text || '', effectiveWidth);
-      // calcolo offset verticale
-      const lineHeightPdf = pdf.internal.getLineHeightFactor() * fontSize;
-      const usedHeight = lines.length * lineHeightPdf;
-      const offsetY = (rowHeight - usedHeight) / 2;
 
-      // disegno ogni riga
-      lines.forEach((ln, idx) => {
+      // 2) splitto in base alla larghezza effettiva
+      let lines = pdf.splitTextToSize(text, effW);
+
+      // 3) calcolo quanti possono starci nell'altezza
+      const lineH = pdf.internal.getLineHeightFactor() * fontSize;
+      const maxLines = Math.floor((rowHeight - 2 * padding) / lineH);
+
+      // 4) eventualmente taglio
+      if (lines.length > maxLines) {
+        lines = lines.slice(0, maxLines);
+      }
+
+      // 5) offsetY per centrare verticalmente
+      const usedH = lines.length * lineH;
+      const offsetY = (rowHeight - usedH) / 2;
+
+      // 6) disegno ogni riga
+      lines.forEach((ln, i) => {
         pdf.text(
           ln,
           x + padding,
-          yCell + padding + offsetY + idx * lineHeightPdf,
-          { baseline: 'top', maxWidth: effectiveWidth }
+          yCell + padding + offsetY + i * lineH,
+          { baseline: 'top', maxWidth: effW }
         );
       });
     };
 
-    // 6) righe proforma con avanzamento pagina
+    // 6) ciclo righe proforma con avanzamento pagina
     for (const it of proforma) {
       if (y + rowH > ph - 20) {
         pdf.addPage();
@@ -348,10 +361,9 @@ const generaPDF = async () => {
       // disegno celle
       let x = tableX;
       colW.forEach(w => { pdf.rect(x, y, w, rowH); x += w; });
-
       let posX = tableX;
 
-      // Codice + descrizione
+      // Codice + Descrizione
       drawCellText(
         `${it.codice} - ${it.descrizione}`,
         posX, y,
@@ -376,11 +388,11 @@ const generaPDF = async () => {
       }
       posX += colW[1];
 
-      // Unità di misura
+      // U.M.
       drawCellText(it.unitaMisura || '', posX, y, colW[2], rowH, 6.5, 1);
       posX += colW[2];
 
-      // prezzi e quantità
+      // Prezzi / Q.tà
       if (mostraPrezzi) {
         ['moqCampione','prezzoCampione','moqProduzione','prezzoProduzione','quantita']
           .forEach((field, idx) => {
@@ -398,7 +410,7 @@ const generaPDF = async () => {
         drawCellText(String(it.quantita || 1), posX, y, colW[3], rowH, 6.5, 1);
       }
 
-      // nota articolo
+      // Nota articolo
       if (it.nota) {
         pdf.setFont(undefined, 'italic');
         drawCellText(
@@ -413,7 +425,7 @@ const generaPDF = async () => {
       y += rowH;
     }
 
-    // note generali
+    // Note generali
     if (noteGenerali) {
       if (y + 20 > ph - 20) {
         pdf.addPage();
@@ -432,6 +444,7 @@ const generaPDF = async () => {
 
     // salva
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+
   } catch (e) {
     console.error(e);
     toast.error('Errore generazione PDF', { position: 'top-right' });
