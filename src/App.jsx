@@ -346,19 +346,10 @@ const generaPDF = async () => {
         const { base64, width, height } = await resizeImageSafe(it.immagine);
         let iw = width, ih = height;
         const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
-        iw *= scale;
-        ih *= scale;
-        pdf.addImage(
-          base64,
-          'JPEG',
-          posX + (colW[1] - iw) / 2,
-          y     + (rowH - ih) / 2,
-          iw,
-          ih
-        );
+        iw *= scale; ih *= scale;
+        const ext = it.immagine.toLowerCase().endsWith('.jpg') ? 'JPG' : 'JPEG';
+        pdf.addImage(base64, ext, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
       }
-      posX += colW[1];
-      
       posX += colW[1];
 
       drawCellText(it.unitaMisura || '', posX, y, colW[2], rowH, 6.5, 1);
