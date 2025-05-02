@@ -314,39 +314,39 @@ const generaPDF = async () => {
     let y = yRef.value;
 
     // helper unico per tutte le celle (lineHeight = fontSize + 0.2, padding variabile)
-const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
-  const rawLines   = (text || '').split('\n');
-  let fontSize     = initialFontSize;
-  let lineHeight   = fontSize + 0.2;
+    const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
+      const rawLines   = (text || '').split('\n');
+      let fontSize     = initialFontSize;
+      let lineHeight   = fontSize + 0.2;
 
-  // genera le linee con font corrente
-  pdf.setFontSize(fontSize);
-  let lines        = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-  let maxLines     = Math.floor((availableHeight - padding * 2) / lineHeight);
+      // genera le linee con font corrente
+      pdf.setFontSize(fontSize);
+      let lines        = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+      let maxLines     = Math.floor((availableHeight - padding * 2) / lineHeight);
 
-  // riduco finché non entra tutto
-  while (lines.length > maxLines && fontSize > 5) {
-    fontSize   -= 0.5;
-    lineHeight  = fontSize + 0.2;
-    pdf.setFontSize(fontSize);
-    lines       = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-    maxLines    = Math.floor((availableHeight - padding * 2) / lineHeight);
-  }
+      // riduco finché non entra tutto
+      while (lines.length > maxLines && fontSize > 5) {
+        fontSize   -= 0.5;
+        lineHeight  = fontSize + 0.2;
+        pdf.setFontSize(fontSize);
+        lines       = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+        maxLines    = Math.floor((availableHeight - padding * 2) / lineHeight);
+      }
 
-  const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
-  const offsetY    = (availableHeight - usedHeight) / 2;
+      const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
+      const offsetY    = (availableHeight - usedHeight) / 2;
 
-  pdf.setLineHeightFactor(0.8);
-  lines.slice(0, maxLines).forEach((ln, idx) => {
-    pdf.text(
-      ln,
-      x + padding,
-      y + offsetY + padding + idx * lineHeight,
-      { baseline: 'top' }
-    );
-  });
-};
-    
+      pdf.setLineHeightFactor(0.8);
+      lines.slice(0, maxLines).forEach((ln, idx) => {
+        pdf.text(
+          ln,
+          x + padding,
+          y + offsetY + padding + idx * lineHeight,
+          { baseline: 'top' }
+        );
+      });
+    };
+        
 
     // 6) ciclo righe con controllo di avanzamento pagina
     for (const it of proforma) {
