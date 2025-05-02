@@ -52,9 +52,6 @@ const resizeImageSafe = async src => {
   ctx.drawImage(img, 0, 0, w, h);
   ctx.filter = 'none';
 
-  // 4) esporta come PNG per zero compressione
-  const boostedBase64 = canvas.toDataURL('image/png');
-
   return {
     base64: boostedBase64,
     width:  w,
