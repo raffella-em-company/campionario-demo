@@ -411,13 +411,21 @@ const generaPDF = async () => {
       }
 
      // — Nota articolo (wrap + centratura) —
-     drawCellText(
-      `${it.nota}`,
-      posX, y,
-      colW[0], rowH,
-      8, 2
-    );
-    posX += colW[0];
+     if (it.nota) {
+      pdf.setFont(undefined, 'italic');
+      const noteH = 12;
+      drawCellText(
+        'Nota: ' + it.nota,
+        tableX,
+        y + rowH - noteH,
+        pw - 20,
+        noteH,
+        7,
+        2
+      );
+      pdf.setFont(undefined, 'normal');
+    }
+    y += rowH;
   }  
 
     // Note generali
