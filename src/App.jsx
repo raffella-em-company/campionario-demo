@@ -332,11 +332,9 @@ const generaPDF = async () => {
       pdf.setFontSize(fontSize);
       pdf.setLineHeightFactor(0.9);
       pdf.text(
-        lines.slice(0, maxLines),
-        x + padding,
-        y + offsetY + padding,
-        { baseline: 'top' }
-      );
+        lines.slice(0, maxLines).forEach((ln, idx) => {
+          pdf.text(ln, x + padding, y + offsetY + padding + idx * lineHeight, { baseline: 'top' });
+          }));
       
     };
 
@@ -349,7 +347,17 @@ const generaPDF = async () => {
         drawHeaders(pdf, headers, colW, tableX, yRef);
         y = yRef.value;
       }
-      
+      // ── Disegno "Note generali" sotto la tabella, se presenti ──
+      if (noteGenerali) {
+        const startY = y + 10; // 10mm sotto l’ultima riga
+        const colWidth = pw - 20; // margini 10mm a sx e dx
+        const lines = pdf.splitTextToSize(noteGenerali, colWidth);
+        pdf.setFontSize(8);
+        pdf.setFont(undefined, 'italic');
+        pdf.text('Note generali:', 10, startY);
+        pdf.setFont(undefined, 'normal');
+        pdf.text(lines, 10, startY + 4);
+      }
 
       // disegno griglia
       let x = tableX;
@@ -403,6 +411,7 @@ const generaPDF = async () => {
 
       y += rowH;
     }
+    
 
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`);
   } catch (e) {
