@@ -319,10 +319,8 @@ const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeig
   let fontSize     = initialFontSize;
   let lineHeight   = fontSize + 0.2;
 
-  // imposta subito il font sul PDF
-  pdf.setFontSize(fontSize);
-
   // genera le linee con font corrente
+  pdf.setFontSize(fontSize);
   let lines        = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
   let maxLines     = Math.floor((availableHeight - padding * 2) / lineHeight);
 
@@ -330,7 +328,7 @@ const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeig
   while (lines.length > maxLines && fontSize > 5) {
     fontSize   -= 0.5;
     lineHeight  = fontSize + 0.2;
-    pdf.setFontSize(fontSize);  // ← qui aggiorno il font sul PDF
+    pdf.setFontSize(fontSize);
     lines       = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
     maxLines    = Math.floor((availableHeight - padding * 2) / lineHeight);
   }
