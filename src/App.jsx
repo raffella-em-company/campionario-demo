@@ -223,7 +223,7 @@ function App() {
   
     pdf.setFontSize(headerFont);
     pdf.setFont(undefined, 'bold');
-    pdf.setLineHeightFactor(0.8);
+    pdf.setLineHeightFactor(0.9);
   
     let x = tableX;
     let y = yRef.value;
@@ -252,7 +252,7 @@ const generaPDF = async () => {
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    pdf.setLineHeightFactor(0.8);
+    pdf.setLineHeightFactor(0.9);
     const pw = pdf.internal.pageSize.getWidth();
 
     // 1) logo + header
@@ -330,7 +330,7 @@ const generaPDF = async () => {
       const offsetY   = (availableHeight - usedHeight) / 2;
       
       pdf.setFontSize(fontSize);
-      pdf.setLineHeightFactor(0.8);
+      pdf.setLineHeightFactor(0.9);
       pdf.text(
         lines.slice(0, maxLines),
         x + padding,
