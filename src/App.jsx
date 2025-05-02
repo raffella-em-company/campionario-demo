@@ -375,11 +375,13 @@ const generaPDF = async () => {
 
       if (it.nota) {
         pdf.setFont(undefined, 'italic');
-        drawCellText('Nota: ' + it.nota, tableX, y, colW[0], rowH, 12, 7, 2);
+        drawCellText(
+          'Nota: ' + it.nota, tableX, colW[0], rowH, 2 );
         pdf.setFont(undefined, 'normal');
       }
-
+      
       y += rowH;
+      
     }
 
     if (noteGenerali) {
