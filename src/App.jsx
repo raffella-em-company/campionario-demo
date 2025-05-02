@@ -230,21 +230,23 @@ function App() {
   
     headers.forEach((h, i) => {
       const lines      = h.split('\n');
-      const lineHeight = headerFont + 0.2; 
-      // non centriamo più: partiamo subito da y+pad
       pdf.rect(x, y, colW[i], headerHeight);
+  
+
       pdf.text(
-      h.split('\n'),
-      x + pad,
-      y + pad,
-      { baseline: 'top' }
-    );
-    x += colW[i];
-  });
-        
-  pdf.setFont(undefined, 'normal');
-  yRef.value = y + headerHeight;
-}; 
+        lines,
+        x + pad,
+        y + pad,
+        { baseline: 'top' }
+      );
+  
+      x += colW[i];
+    });
+  
+    pdf.setFont(undefined, 'normal');
+    yRef.value = y + headerHeight;
+  };
+  
 
 // genera PDF
 const marginTop = 15;
@@ -318,25 +320,32 @@ const generaPDF = async () => {
       let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
       let lineHeight = fontSize + 0.2;
       let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
-
+    
+      // riduco il font finché non rientra nel box
       while (lines.length > maxLines && fontSize > 5) {
         fontSize -= 0.5;
         lineHeight = fontSize + 0.2;
         lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
         maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
       }
-
+    
       const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
       const offsetY   = (availableHeight - usedHeight) / 2;
-      
+    
       pdf.setFontSize(fontSize);
-      pdf.setLineHeightFactor(0.9);
-      pdf.text(
-        lines.slice(0, maxLines).forEach((ln, idx) => {
-          pdf.text(ln, x + padding, y + offsetY + padding + idx * lineHeight, { baseline: 'top' });
-          }));
-      
+      pdf.setLineHeightFactor(0.8);
+    
+      // disegno ogni riga singolarmente
+      lines.slice(0, maxLines).forEach((ln, idx) => {
+        pdf.text(
+          ln,
+          x + padding,
+          y + offsetY + padding + idx * lineHeight,
+          { baseline: 'top' }
+        );
+      });
     };
+    
 
     // 6) ciclo righe con controllo di avanzamento pagina
     for (const it of proforma) {
@@ -349,14 +358,14 @@ const generaPDF = async () => {
       }
       // ── Disegno "Note generali" sotto la tabella, se presenti ──
       if (noteGenerali) {
-        const startY = y + 10; // 10mm sotto l’ultima riga
-        const colWidth = pw - 20; // margini 10mm a sx e dx
-        const lines = pdf.splitTextToSize(noteGenerali, colWidth);
+        const footerY = y + 10; 
+        const colWidth = pw - 20;
+        const noteLines = pdf.splitTextToSize(noteGenerali, colWidth);
         pdf.setFontSize(8);
         pdf.setFont(undefined, 'italic');
-        pdf.text('Note generali:', 10, startY);
+        pdf.text('Note generali:', 10, footerY);
         pdf.setFont(undefined, 'normal');
-        pdf.text(lines, 10, startY + 4);
+        pdf.text(noteLines, 10, footerY + 4);
       }
 
       // disegno griglia
