@@ -315,30 +315,19 @@ const generaPDF = async () => {
     drawHeaders(pdf, headers, colW, tableX, yRef);
     let y = yRef.value;
 
-    // === helper: wrap + centratura verticale + max lines ===
+    // helper unico: wrap + centratura verticale + max lines
     const drawCellText = (rawText, x, yCell, width, rowHeight, fontSize, padding) => {
-      // 1) permetto la rottura su "-" anche senza spazi
-      const text = (rawText || '').replace(/-/g, '-\u200B');
+      pdf.setFont(undefined, 'normal');
+      const text = (rawText || '').replace(/([_\-/])/g, '$1\u200B');
       const effW = width - 2 * padding;
       pdf.setFontSize(fontSize);
-
-      // 2) splitto in base alla larghezza effettiva
+      pdf.setLineHeightFactor(0.8);
       let lines = pdf.splitTextToSize(text, effW);
-
-      // 3) calcolo quanti possono starci nell'altezza
       const lineH = pdf.internal.getLineHeightFactor() * fontSize;
       const maxLines = Math.floor((rowHeight - 2 * padding) / lineH);
-
-      // 4) eventualmente taglio
-      if (lines.length > maxLines) {
-        lines = lines.slice(0, maxLines);
-      }
-
-      // 5) offsetY per centrare verticalmente
+      if (lines.length > maxLines) lines = lines.slice(0, maxLines);
       const usedH = lines.length * lineH;
       const offsetY = (rowHeight - usedH) / 2;
-
-      // 6) disegno ogni riga
       lines.forEach((ln, i) => {
         pdf.text(
           ln,
