@@ -217,9 +217,9 @@ function App() {
   };
 
   const drawHeaders = (pdf, headers, colW, tableX, yRef) => {
-    const headerFont = 8;
-    const headerHeight = 10;
-    const pad = 1;
+    const headerFont   = 8;
+    const headerHeight = 10; // fisso
+    const pad          = 1;
   
     pdf.setFontSize(headerFont);
     pdf.setFont(undefined, 'bold');
@@ -228,27 +228,24 @@ function App() {
     let y = yRef.value;
   
     headers.forEach((h, i) => {
-      const lines = h.split('\n');  
-      const lineHeight = headerFont + 0.2;
-      const usedH = lines.length * lineHeight;
-      const offsetY = (headerHeight - usedH) / 2;
-  
+      const lines      = h.split('\n');
+      const lineHeight = headerFont + 0.2; 
+      // non centriamo più: partiamo subito da y+pad
       pdf.rect(x, y, colW[i], headerHeight);
       lines.forEach((line, idx) => {
         pdf.text(
           line,
           x + pad,
-          y + offsetY + pad + idx * lineHeight,
+          y + pad + idx * lineHeight,
           { baseline: 'top' }
         );
       });
-  
       x += colW[i];
     });
   
     pdf.setFont(undefined, 'normal');
-    yRef.value = y + headerHeight; 
-  };
+    yRef.value = y + headerHeight;
+  };  
 
 // genera PDF
 const marginTop = 15;
