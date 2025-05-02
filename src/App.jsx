@@ -68,6 +68,8 @@ const resizeImageSafe = async src => {
 
 function App() {
   // stato e persistenza
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress]   = useState(0);
   const saved = JSON.parse(localStorage.getItem('appState') || '{}');
   const [articoli, setArticoli] = useState([]);
   const [articoliTrovati, setArticoliTrovati] = useState([]);
@@ -78,7 +80,6 @@ function App() {
   const [corriere, setCorriere] = useState(saved.corriere || '');
   const [noteGenerali, setNoteGenerali] = useState(saved.noteGenerali || '');
   const [popupImg, setPopupImg] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [mostraPrezzi, setMostraPrezzi] = useState(true);
   const [user, setUser] = useState(null);
@@ -251,6 +252,7 @@ function App() {
 // genera PDF
 const marginTop = 15;
 const generaPDF = async () => {
+  setProgress(0);
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -388,7 +390,9 @@ const generaPDF = async () => {
         );
         pdf.setFont(undefined, 'normal');
       }
-      
+      const currentIndex = proforma.indexOf(it) + 1;
+      const totalItems   = proforma.length;
+      setProgress((currentIndex / totalItems) * 100);
       y += rowH;
       
       
@@ -411,18 +415,20 @@ const generaPDF = async () => {
     }
 
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+    setProgress(100);
   } catch (e) {
     console.error(e);
     toast.error('Errore generazione PDF', { position: 'top-right' });
   } finally {
     setIsLoading(false);
+    setProgress(0);
   }
 };
-
 
   return (
     <>
       <ToastContainer />
+
       {!user ? (
         <div className="login-container">
           <button onClick={loginGoogle} className="btn-login">
@@ -432,16 +438,19 @@ const generaPDF = async () => {
       ) : (
         <>
           {isLoading && (
-            <div style={{
-              position: 'fixed', top: 0, left: 0,
-              width: '100%', height: '100%',
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              zIndex: 1000
-            }}>
-              <div className="loader-pdf">Generazione PDF...</div>
+            <div className="loader-overlay">
+              <div className="loader-box">
+                <div className="loader-text">Generazione PDF…</div>
+                <progress
+                  className="loader-progress"
+                  value={progress}
+                  max="100"
+                />
+                <div className="loader-percent">{Math.round(progress)}%</div>
+              </div>
             </div>
           )}
+
           <div className="container">
             <h1>Campionario</h1>
             <p className="welcome">Benvenutə, {user.displayName}</p>
