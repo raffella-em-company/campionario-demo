@@ -313,38 +313,41 @@ const generaPDF = async () => {
     drawHeaders(pdf, headers, colW, tableX, yRef);
     let y = yRef.value;
 
-    // helper unico per tutte le celle (lineHeight = fontSize + 0.5, padding variabile)
-    const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
-      const rawLines = (text || '').split('\n');
-      let fontSize = initialFontSize;
-      let lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-      let lineHeight = fontSize + 0.2;
-      let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
-    
-      // riduco il font finché non entra nel box
-      while (lines.length > maxLines && fontSize > 5) {
-        fontSize -= 0.5;
-        lineHeight = fontSize + 0.2;
-        lines = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-        maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
-      }
-    
-      const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
-      const offsetY   = (availableHeight - usedHeight) / 2;
-    
-      pdf.setFontSize(fontSize);
-      pdf.setLineHeightFactor(0.8);
-    
-      // disegno riga per riga
-      lines.slice(0, maxLines).forEach((ln, i) => {
-        pdf.text(
-          ln,
-          x + padding,
-          y + offsetY + padding + i * lineHeight,
-          { baseline: 'top' }
-        );
-      });
-    };    
+    // helper unico per tutte le celle (lineHeight = fontSize + 0.2, padding variabile)
+const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
+  const rawLines   = (text || '').split('\n');
+  let fontSize     = initialFontSize;
+  let lineHeight   = fontSize + 0.2;
+
+  // imposta subito il font sul PDF
+  pdf.setFontSize(fontSize);
+
+  // genera le linee con font corrente
+  let lines        = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+  let maxLines     = Math.floor((availableHeight - padding * 2) / lineHeight);
+
+  // riduco finché non entra tutto
+  while (lines.length > maxLines && fontSize > 5) {
+    fontSize   -= 0.5;
+    lineHeight  = fontSize + 0.2;
+    pdf.setFontSize(fontSize);  // ← qui aggiorno il font sul PDF
+    lines       = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+    maxLines    = Math.floor((availableHeight - padding * 2) / lineHeight);
+  }
+
+  const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
+  const offsetY    = (availableHeight - usedHeight) / 2;
+
+  pdf.setLineHeightFactor(0.8);
+  lines.slice(0, maxLines).forEach((ln, idx) => {
+    pdf.text(
+      ln,
+      x + padding,
+      y + offsetY + padding + idx * lineHeight,
+      { baseline: 'top' }
+    );
+  });
+};
     
 
     // 6) ciclo righe con controllo di avanzamento pagina
