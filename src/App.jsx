@@ -218,11 +218,12 @@ function App() {
 
   const drawHeaders = (pdf, headers, colW, tableX, yRef) => {
     const headerFont   = 8;
-    const headerHeight = 10; // fisso
+    const headerHeight = 10;
     const pad          = 1;
   
     pdf.setFontSize(headerFont);
     pdf.setFont(undefined, 'bold');
+    pdf.setLineHeightFactor(0.8);
   
     let x = tableX;
     let y = yRef.value;
@@ -232,20 +233,18 @@ function App() {
       const lineHeight = headerFont + 0.2; 
       // non centriamo più: partiamo subito da y+pad
       pdf.rect(x, y, colW[i], headerHeight);
-      lines.forEach((line, idx) => {
-        pdf.text(
-          line,
-          x + pad,
-          y + pad + idx * lineHeight,
-          { baseline: 'top' }
-        );
-      });
-      x += colW[i];
-    });
-  
-    pdf.setFont(undefined, 'normal');
-    yRef.value = y + headerHeight;
-  };  
+      pdf.text(
+      h.split('\n'),
+      x + pad,
+      y + pad,
+      { baseline: 'top' }
+    );
+    x += colW[i];
+  });
+        
+  pdf.setFont(undefined, 'normal');
+  yRef.value = y + headerHeight;
+}; 
 
 // genera PDF
 const marginTop = 15;
@@ -253,7 +252,7 @@ const generaPDF = async () => {
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    pdf.setLineHeightFactor(0.9);
+    pdf.setLineHeightFactor(0.8);
     const pw = pdf.internal.pageSize.getWidth();
 
     // 1) logo + header
@@ -328,12 +327,17 @@ const generaPDF = async () => {
       }
 
       const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
-      const offsetY = (availableHeight - usedHeight) / 2;
-
+      const offsetY   = (availableHeight - usedHeight) / 2;
+      
       pdf.setFontSize(fontSize);
-      lines.slice(0, maxLines).forEach((line, i) => {
-        pdf.text(line, x + padding, y + offsetY + padding + i * lineHeight);
-      });
+      pdf.setLineHeightFactor(0.8);
+      pdf.text(
+        lines.slice(0, maxLines),
+        x + padding,
+        y + offsetY + padding,
+        { baseline: 'top' }
+      );
+      
     };
 
     // 6) ciclo righe con controllo di avanzamento pagina
