@@ -228,8 +228,8 @@ function App() {
     let y = yRef.value;
   
     headers.forEach((h, i) => {
-      const lines = h.split('\n');                 // 1) split manuale sui \n
-      const lineHeight = headerFont + 0.5;
+      const lines = h.split('\n');  
+      const lineHeight = headerFont + 0.2;
       const usedH = lines.length * lineHeight;
       const offsetY = (headerHeight - usedH) / 2;
   
@@ -247,7 +247,7 @@ function App() {
     });
   
     pdf.setFont(undefined, 'normal');
-    yRef.value = y + headerHeight;                // 2) aggiorno y tramite riferimento
+    yRef.value = y + headerHeight; 
   };
 
 // genera PDF
