@@ -353,7 +353,6 @@ const generaPDF = async () => {
       let posX = tableX;
 
       // Codice + Descrizione
-      pdf.setFont(undefined, 'normal');
       drawCellText(
         `${it.codice} - ${it.descrizione}`,
         posX, y,
