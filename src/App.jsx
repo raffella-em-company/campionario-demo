@@ -261,6 +261,7 @@ const generaPDF = async () => {
     const drawCellText = (text, x, y, width, height, fontSize, padding) => {
       pdf.setFont(undefined, 'normal');
       pdf.setFontSize(fontSize);
+      pdf.setLineHeightFactor(0.7);
       const effW = width - 2 * padding;
       const lines = pdf.splitTextToSize(text || '', effW);
       const lineH = pdf.internal.getLineHeightFactor() * fontSize;
