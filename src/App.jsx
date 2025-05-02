@@ -81,8 +81,12 @@ function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [mostraPrezzi, setMostraPrezzi] = useState(true);
   const [user, setUser] = useState(null);
-
   const provider = new GoogleAuthProvider();
+  const confermaRimuovi = index => {
+    if (window.confirm('Vuoi veramente rimuovere questo articolo?')) {
+      rimuoviDaProforma(index);
+    }
+  };
 
   // salva in localStorage
   useEffect(() => {
@@ -546,6 +550,15 @@ const generaPDF = async () => {
                       onContextMenu={e => {
                         e.preventDefault();
                         confermaRimuovi(i);
+                      }}
+                      onTouchStart={() => {
+                        it._touchTimer = setTimeout(() => confermaRimuovi(i), 600);
+                      }}
+                      onTouchEnd={() => {
+                        clearTimeout(it._touchTimer);
+                      }}
+                      onTouchMove={() => {
+                        clearTimeout(it._touchTimer);
                       }}
                     >
                       <div className="info">
