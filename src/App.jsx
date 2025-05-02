@@ -26,42 +26,30 @@ const loadImageBase64 = async url => {
 
 const resizeImageSafe = async src => {
   try {
-    const res = await fetch(src, { mode: 'cors' });
+    // 1) scarica il file
+    const res  = await fetch(src, { mode: 'cors' });
     const blob = await res.blob();
-    return new Promise(resolve => {
+
+    // 2) blob → base64
+    const base64 = await new Promise(resolve => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          const useCanvas = img.width > 1500 || img.height > 1500;
-          if (useCanvas) {
-            const canvas = document.createElement('canvas');
-            const scale = 0.3;
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'medium';
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve({
-              base64: canvas.toDataURL('image/jpeg', 0.8),
-              width: canvas.width,
-              height: canvas.height
-            });
-          } else {
-            resolve({
-              base64: reader.result,
-              width: img.width,
-              height: img.height
-            });
-          }
-        };
-        img.src = reader.result;
-      };
+      reader.onloadend = () => resolve(reader.result);
       reader.readAsDataURL(blob);
     });
+
+    // 3) misura l’immagine
+    const img = new Image();
+    img.src = base64;
+    await new Promise(r => (img.onload = r));
+
+    return {
+      base64,         // JPEG originale, non ricompressa
+      width: img.width,
+      height: img.height
+    };
   } catch (e) {
     console.warn('resizeImageSafe error', e);
+    // in caso di problemi torna un placeholder insignificante
     return { base64: src, width: 1, height: 1 };
   }
 };
