@@ -409,25 +409,24 @@ const generaPDF = async () => {
 
       y += rowH;
 
-          // ── "Note generali" UNA SOLA VOLTA alla fine ──
-    if (noteGenerali) {
-      const pageH = pdf.internal.pageSize.getHeight();
-      if (y + 20 > pageH - 20) {
-        pdf.addPage();
-        y = marginTop;
-      }
-      const colWFull = pw - 20;
-      const lines = pdf.splitTextToSize(noteGenerali, colWFull);
-      pdf.setFontSize(8);
-      pdf.setFont(undefined, 'italic');
-      pdf.text('Note generali:', 10, y + 10);
-      pdf.setFont(undefined, 'normal');
-      lines.forEach((ln, i) => {
-        pdf.text(ln, 10, y + 15 + i * 4); // 4mm riga
-      });
     }
-
-    }
+        // ── "Note generali" UNA SOLA VOLTA alla fine ──
+        if (noteGenerali) {
+          const pageH = pdf.internal.pageSize.getHeight();
+          if (y + 20 > pageH - 20) {
+            pdf.addPage();
+            y = marginTop;
+          }
+          const colWFull = pw - 20;
+          const lines = pdf.splitTextToSize(noteGenerali, colWFull);
+          pdf.setFontSize(8);
+          pdf.setFont(undefined, 'italic');
+          pdf.text('Note generali:', 10, y + 10);
+          pdf.setFont(undefined, 'normal');
+          lines.forEach((ln, i) => {
+            pdf.text(ln, 10, y + 15 + i * 4); // 4mm riga
+          });
+        }
     
 
     pdf.save(`campionatura-${cliente.toLowerCase().replace(/\s+/g,'_')}.pdf`);
