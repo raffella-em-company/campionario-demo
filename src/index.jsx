@@ -25,3 +25,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </>
 );
+// REGISTER SERVICE WORKER PER INSTALLABILITÀ PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then(reg => {
+        console.log('ServiceWorker registrato:', reg.scope);
+      })
+      .catch(err => {
+        console.error('ServiceWorker registration failed:', err);
+      });
+  });
+}
