@@ -281,8 +281,8 @@ const generaPDF = async () => {
     const drawHeaders = () => {
       let x = tableX;
       const headerFont = 7;
-      const headerHeight = 15;
-      const pad = 2;
+      const headerHeight = 12;
+      const pad = 1;
 
       pdf.setFontSize(headerFont);
       pdf.setFont(undefined, 'bold');
@@ -294,11 +294,17 @@ const generaPDF = async () => {
 
         pdf.rect(x, y, colW[i], headerHeight);
         lines.forEach((line, idx) => {
-          pdf.text(line, x + pad, y + offsetY + pad + idx * (headerFont + 0.5));
+          pdf.text(
+            line,
+            x + pad,
+            y + offsetY + pad + idx * lineHeight,
+            { baseline: 'top' }
+          );
         });
+    
         x += colW[i];
       });
-
+    
       pdf.setFont(undefined, 'normal');
       y += headerHeight;
     };
