@@ -410,23 +410,20 @@ const generaPDF = async () => {
         drawCellText(String(it.quantita || 1), posX, y, colW[3], rowH, 6.5, 1);
       }
 
-     // — Nota articolo (wrap + centratura) —
-     if (it.nota) {
-      pdf.setFont(undefined, 'italic');
-      const noteH = 12;
-      drawCellText(
-        'Nota: ' + it.nota,
-        tableX,
-        y + rowH - noteH,
-        pw - 20,
-        noteH,
-        7,
-        2
-      );
-      pdf.setFont(undefined, 'normal');
+      // Nota articolo
+      if (it.nota) {
+        pdf.setFont(undefined, 'italic');
+        drawCellText(
+          'Nota: ' + it.nota,
+          tableX, y + rowH - 12,
+          pw - 20, 12,
+          7, 2
+        );
+        pdf.setFont(undefined, 'normal');
+      }
+
+      y += rowH;
     }
-    y += rowH;
-  }  
 
     // Note generali
     if (noteGenerali) {
