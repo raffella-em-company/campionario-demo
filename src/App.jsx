@@ -353,8 +353,7 @@ const generaPDF = async () => {
         let iw = width, ih = height;
         const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
         iw *= scale; ih *= scale;
-        const ext = it.immagine.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG';
-        pdf.addImage(base64, ext, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
+        pdf.addImage(base64, 'PNG', posX + (colW[1] - iw) / 2, y     + (rowH - ih) / 2, iw, ih);
       }
       posX += colW[1];
 
