@@ -218,7 +218,7 @@ function App() {
 
   const drawHeaders = (pdf, headers, colW, tableX, yRef) => {
     const headerFont = 8;
-    const headerHeight = 12;
+    const headerHeight = 10;
     const pad = 1;
   
     pdf.setFontSize(headerFont);
