@@ -25,34 +25,19 @@ const loadImageBase64 = async url => {
 };
 
 const resizeImageSafe = async src => {
-  try {
-    // 1) scarica il file
-    const res  = await fetch(src, { mode: 'cors' });
-    const blob = await res.blob();
-
-    // 2) blob → base64
-    const base64 = await new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-
-    // 3) misura l’immagine
-    const img = new Image();
-    img.src = base64;
-    await new Promise(r => (img.onload = r));
-
-    return {
-      base64,         // JPEG originale, non ricompressa
-      width: img.width,
-      height: img.height
-    };
-  } catch (e) {
-    console.warn('resizeImageSafe error', e);
-    // in caso di problemi torna un placeholder insignificante
-    return { base64: src, width: 1, height: 1 };
-  }
+  const res  = await fetch(src, { mode: 'cors' });
+  const blob = await res.blob();
+  const base64 = await new Promise(r => {
+    const rd = new FileReader();
+    rd.onloadend = () => r(rd.result);
+    rd.readAsDataURL(blob);
+  });
+  const img = new Image();
+  img.src = base64;
+  await new Promise(r => (img.onload = r));
+  return { base64, width: img.width, height: img.height };
 };
+
 
 function App() {
   // stato e persistenza
