@@ -216,6 +216,40 @@ function App() {
     });
   };
 
+  const drawHeaders = (pdf, headers, colW, tableX, yRef) => {
+    const headerFont = 8;
+    const headerHeight = 12;
+    const pad = 1;
+  
+    pdf.setFontSize(headerFont);
+    pdf.setFont(undefined, 'bold');
+  
+    let x = tableX;
+    let y = yRef.value;
+  
+    headers.forEach((h, i) => {
+      const lines = h.split('\n');                 // 1) split manuale sui \n
+      const lineHeight = headerFont + 0.5;
+      const usedH = lines.length * lineHeight;
+      const offsetY = (headerHeight - usedH) / 2;
+  
+      pdf.rect(x, y, colW[i], headerHeight);
+      lines.forEach((line, idx) => {
+        pdf.text(
+          line,
+          x + pad,
+          y + offsetY + pad + idx * lineHeight,
+          { baseline: 'top' }
+        );
+      });
+  
+      x += colW[i];
+    });
+  
+    pdf.setFont(undefined, 'normal');
+    yRef.value = y + headerHeight;                // 2) aggiorno y tramite riferimento
+  };
+
 // genera PDF
 const marginTop = 15;
 const generaPDF = async () => {
@@ -275,46 +309,10 @@ const generaPDF = async () => {
       : ['Codice + Descrizione','Immagine','U.M.','Q.tà'];
     const tableX = 10;
     const rowH = 55;
-    let y = cursorY + 10;
+    let yRef = { value: cursorY + 10 };
 
- // disegno intestazioni
-const drawHeaders = () => {
-  let x = tableX;
-  const headerFont = 8;      // (1) aumenti leggermente la dimensione
-  const headerHeight = 12;   // (2) riduci un po’ l’altezza (era 15)
-  const pad = 1;             // (3) padding interno 1 mm
-
-  pdf.setFontSize(headerFont);
-  pdf.setFont(undefined, 'bold');
-
-  headers.forEach((h, i) => {
-    // dividi le label su due righe attorno al newline
-    const lines = pdf.splitTextToSize(h, colW[i] - pad * 2);
-    // interlinea ridotta: fontSize + 0.5
-    const lineHeight = headerFont + 0.5;
-    const usedH = lines.length * lineHeight;
-    const offsetY = (headerHeight - usedH) / 2;
-
-    // box
-    pdf.rect(x, y, colW[i], headerHeight);
-
-    // testo
-    lines.forEach((line, idx) => {
-      pdf.text(
-        line,
-        x + pad,
-        y + offsetY + pad + idx * lineHeight,
-        { baseline: 'top' }
-      );
-    });
-
-    x += colW[i];
-  });
-
-  pdf.setFont(undefined, 'normal');
-  y += headerHeight;
-};
-    drawHeaders();
+    drawHeaders(pdf, headers, colW, tableX, yRef);
+    let y = yRef.value;
 
     // helper unico per tutte le celle (lineHeight = fontSize + 0.5, padding variabile)
     const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
@@ -345,9 +343,11 @@ const drawHeaders = () => {
       const pageHeight = pdf.internal.pageSize.getHeight();
       if (y + rowH > pageHeight - 20) {
         pdf.addPage();
-        y = marginTop;
-        drawHeaders();
+        yRef.value = marginTop;
+        drawHeaders(pdf, headers, colW, tableX, yRef);
+        y = yRef.value;
       }
+      
 
       // disegno griglia
       let x = tableX;
