@@ -25,18 +25,43 @@ const loadImageBase64 = async url => {
 };
 
 const resizeImageSafe = async src => {
+  // 1) scarica e converte in base64
   const res  = await fetch(src, { mode: 'cors' });
   const blob = await res.blob();
-  const base64 = await new Promise(r => {
+  const base64 = await new Promise(resolve => {
     const rd = new FileReader();
-    rd.onloadend = () => r(rd.result);
+    rd.onloadend = () => resolve(rd.result);
     rd.readAsDataURL(blob);
   });
+
+  // 2) misura l’originale
   const img = new Image();
   img.src = base64;
   await new Promise(r => (img.onload = r));
-  return { base64, width: img.width, height: img.height };
+  const w = img.width;
+  const h = img.height;
+
+  // 3) canvas con filtro più aggressivo
+  const canvas = document.createElement('canvas');
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // spingi luminosità, saturazione e contrasto
+  ctx.filter = 'brightness(1.2) saturate(1.5) contrast(1.1)';
+  ctx.drawImage(img, 0, 0, w, h);
+  ctx.filter = 'none';
+
+  // 4) esporta come PNG per zero compressione
+  const boostedBase64 = canvas.toDataURL('image/png');
+
+  return {
+    base64: boostedBase64,
+    width:  w,
+    height: h
+  };
 };
+
 
 
 function App() {
