@@ -25,7 +25,7 @@ const loadImageBase64 = async url => {
 };
 
 const resizeImageSafe = async src => {
-  // 1) scarica e converte in base64
+  // 1) scarica e converte in base64 l’originale
   const res  = await fetch(src, { mode: 'cors' });
   const blob = await res.blob();
   const base64 = await new Promise(resolve => {
@@ -34,32 +34,36 @@ const resizeImageSafe = async src => {
     rd.readAsDataURL(blob);
   });
 
-  // 2) misura l’originale
+  // 2) misura l’immagine
   const img = new Image();
   img.src = base64;
   await new Promise(r => (img.onload = r));
   const w = img.width;
   const h = img.height;
 
-  // 3) canvas con filtro più aggressivo
+  // 3) disegna su canvas (facoltativo: filtri per boost colore)
   const canvas = document.createElement('canvas');
   canvas.width  = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-
-  // spingi luminosità, saturazione e contrasto
-  ctx.filter = 'brightness(1.2) saturate(1.5) contrast(1.1)';
+  // se vuoi compensare ancora un po’ i colori, puoi aggiungere:
+  // ctx.filter = 'brightness(1.1) saturate(1.3)';
   ctx.drawImage(img, 0, 0, w, h);
-  ctx.filter = 'none';
+  // ctx.filter = 'none';
 
-  // 4) esporta come PNG 
-  const boostedBase64 = canvas.toDataURL('image/png');
+  // 4) estrai un vero JPEG quality=1.0
+  const jpegBlob = await new Promise(res =>
+    canvas.toBlob(res, 'image/jpeg', 1.0)
+  );
 
-  return {
-    base64: boostedBase64,
-    width:  w,
-    height: h
-  };
+  // 5) blob → base64
+  const boostedBase64 = await new Promise(resolve => {
+    const rd = new FileReader();
+    rd.onloadend = () => resolve(rd.result);
+    rd.readAsDataURL(jpegBlob);
+  });
+
+  return { base64: boostedBase64, width: w, height: h };
 };
 
 
@@ -352,10 +356,19 @@ const generaPDF = async () => {
         const { base64, width, height } = await resizeImageSafe(it.immagine);
         let iw = width, ih = height;
         const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
-        iw *= scale; ih *= scale;
-        pdf.addImage(base64, 'PNG', posX + (colW[1] - iw) / 2, y     + (rowH - ih) / 2, iw, ih);
+        iw *= scale;
+        ih *= scale;
+        pdf.addImage(
+          base64,
+          'JPEG',
+          posX + (colW[1] - iw) / 2,
+          y     + (rowH - ih) / 2,
+          iw,
+          ih
+        );
       }
       posX += colW[1];
+      
 
       drawCellText(it.unitaMisura || '', posX, y, colW[2], rowH, 6.5, 1);
       posX += colW[2];
