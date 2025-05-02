@@ -277,37 +277,43 @@ const generaPDF = async () => {
     const rowH = 55;
     let y = cursorY + 10;
 
-    // disegno intestazioni (15 mm height, padding 2 mm)
-    const drawHeaders = () => {
-      let x = tableX;
-      const headerFont = 7;
-      const headerHeight = 12;
-      const pad = 1;
+ // disegno intestazioni
+const drawHeaders = () => {
+  let x = tableX;
+  const headerFont = 8;      // (1) aumenti leggermente la dimensione
+  const headerHeight = 12;   // (2) riduci un po’ l’altezza (era 15)
+  const pad = 1;             // (3) padding interno 1 mm
 
-      pdf.setFontSize(headerFont);
-      pdf.setFont(undefined, 'bold');
+  pdf.setFontSize(headerFont);
+  pdf.setFont(undefined, 'bold');
 
-      headers.forEach((h, i) => {
-        const lines = pdf.splitTextToSize(h, colW[i] - pad * 2);
-        const usedH = lines.length * (headerFont + 0.5);
-        const offsetY = (headerHeight - usedH) / 2;
+  headers.forEach((h, i) => {
+    // dividi le label su due righe attorno al newline
+    const lines = pdf.splitTextToSize(h, colW[i] - pad * 2);
+    // interlinea ridotta: fontSize + 0.5
+    const lineHeight = headerFont + 0.5;
+    const usedH = lines.length * lineHeight;
+    const offsetY = (headerHeight - usedH) / 2;
 
-        pdf.rect(x, y, colW[i], headerHeight);
-        lines.forEach((line, idx) => {
-          pdf.text(
-            line,
-            x + pad,
-            y + offsetY + pad + idx * lineHeight,
-            { baseline: 'top' }
-          );
-        });
-    
-        x += colW[i];
-      });
-    
-      pdf.setFont(undefined, 'normal');
-      y += headerHeight;
-    };
+    // box
+    pdf.rect(x, y, colW[i], headerHeight);
+
+    // testo
+    lines.forEach((line, idx) => {
+      pdf.text(
+        line,
+        x + pad,
+        y + offsetY + pad + idx * lineHeight,
+        { baseline: 'top' }
+      );
+    });
+
+    x += colW[i];
+  });
+
+  pdf.setFont(undefined, 'normal');
+  y += headerHeight;
+};
     drawHeaders();
 
     // helper unico per tutte le celle (lineHeight = fontSize + 0.5, padding variabile)
