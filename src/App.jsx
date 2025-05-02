@@ -321,7 +321,7 @@ const generaPDF = async () => {
       let lineHeight = fontSize + 0.2;
       let maxLines = Math.floor((availableHeight - padding * 2) / lineHeight);
     
-      // riduco il font finché non rientra nel box
+      // riduco il font finché non entra nel box
       while (lines.length > maxLines && fontSize > 5) {
         fontSize -= 0.5;
         lineHeight = fontSize + 0.2;
@@ -335,16 +335,16 @@ const generaPDF = async () => {
       pdf.setFontSize(fontSize);
       pdf.setLineHeightFactor(0.8);
     
-      // disegno ogni riga singolarmente
-      lines.slice(0, maxLines).forEach((ln, idx) => {
+      // disegno riga per riga
+      lines.slice(0, maxLines).forEach((ln, i) => {
         pdf.text(
           ln,
           x + padding,
-          y + offsetY + padding + idx * lineHeight,
+          y + offsetY + padding + i * lineHeight,
           { baseline: 'top' }
         );
       });
-    };
+    };    
     
 
     // 6) ciclo righe con controllo di avanzamento pagina
@@ -355,17 +355,6 @@ const generaPDF = async () => {
         yRef.value = marginTop;
         drawHeaders(pdf, headers, colW, tableX, yRef);
         y = yRef.value;
-      }
-      // ── Disegno "Note generali" sotto la tabella, se presenti ──
-      if (noteGenerali) {
-        const footerY = y + 10; 
-        const colWidth = pw - 20;
-        const noteLines = pdf.splitTextToSize(noteGenerali, colWidth);
-        pdf.setFontSize(8);
-        pdf.setFont(undefined, 'italic');
-        pdf.text('Note generali:', 10, footerY);
-        pdf.setFont(undefined, 'normal');
-        pdf.text(noteLines, 10, footerY + 4);
       }
 
       // disegno griglia
@@ -419,6 +408,25 @@ const generaPDF = async () => {
       }
 
       y += rowH;
+
+          // ── "Note generali" UNA SOLA VOLTA alla fine ──
+    if (noteGenerali) {
+      const pageH = pdf.internal.pageSize.getHeight();
+      if (y + 20 > pageH - 20) {
+        pdf.addPage();
+        y = marginTop;
+      }
+      const colWFull = pw - 20;
+      const lines = pdf.splitTextToSize(noteGenerali, colWFull);
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'italic');
+      pdf.text('Note generali:', 10, y + 10);
+      pdf.setFont(undefined, 'normal');
+      lines.forEach((ln, i) => {
+        pdf.text(ln, 10, y + 15 + i * 4); // 4mm riga
+      });
+    }
+
     }
     
 
