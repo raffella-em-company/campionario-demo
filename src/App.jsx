@@ -253,6 +253,7 @@ const generaPDF = async () => {
   setIsLoading(true);
   try {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    pdf.setLineHeightFactor(0.9);
     const pw = pdf.internal.pageSize.getWidth();
 
     // 1) logo + header
