@@ -316,26 +316,26 @@ const generaPDF = async () => {
     // helper unico per tutte le celle (lineHeight = fontSize + 0.2, padding variabile)
     const drawCellText = (text, x, y, width, initialFontSize, padding, availableHeight) => {
       const rawLines   = (text || '').split('\n');
-      let fontSize     = initialFontSize;
-      let lineHeight   = fontSize + 0.2;
-
-      // genera le linee con font corrente
+      let   fontSize   = initialFontSize;
+      let   lineHeight = fontSize + 0.2;
+    
+      // Applico subito la nuova fontSize
       pdf.setFontSize(fontSize);
-      let lines        = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
-      let maxLines     = Math.floor((availableHeight - padding * 2) / lineHeight);
-
-      // riduco finché non entra tutto
+      let   lines      = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
+      let   maxLines   = Math.floor((availableHeight - padding * 2) / lineHeight);
+    
+      // Riduco la fontSize finché non entra
       while (lines.length > maxLines && fontSize > 5) {
         fontSize   -= 0.5;
         lineHeight  = fontSize + 0.2;
-        pdf.setFontSize(fontSize);
+        pdf.setFontSize(fontSize);  // ← qui deve stare **SUBITO** dopo aver cambiato fontSize
         lines       = rawLines.flatMap(l => pdf.splitTextToSize(l, width - padding * 2));
         maxLines    = Math.floor((availableHeight - padding * 2) / lineHeight);
       }
-
+    
       const usedHeight = Math.min(lines.length, maxLines) * lineHeight;
       const offsetY    = (availableHeight - usedHeight) / 2;
-
+    
       pdf.setLineHeightFactor(0.8);
       lines.slice(0, maxLines).forEach((ln, idx) => {
         pdf.text(
@@ -345,7 +345,7 @@ const generaPDF = async () => {
           { baseline: 'top' }
         );
       });
-    };
+    };    
         
 
     // 6) ciclo righe con controllo di avanzamento pagina
