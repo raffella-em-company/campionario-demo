@@ -14,53 +14,47 @@ const formatPrezzo = val => {
   return isNaN(parsed) ? '0.00' : parsed.toFixed(2);
 };
 
-const loadImageBase64 = async url => {
-  const res = await fetch(url);
+const resizeImageSafe = async src => {
+  // 1) fetch e base64 originale
+  const res  = await fetch(src, { mode: 'cors' });
   const blob = await res.blob();
-  return new Promise(resolve => {
+  const base64 = await new Promise(resolve => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
     reader.readAsDataURL(blob);
   });
-};
 
-const resizeImageSafe = async src => {
-  // 1) scarica e converte in base64
-  const res  = await fetch(src, { mode: 'cors' });
-  const blob = await res.blob();
-  const base64 = await new Promise(resolve => {
-    const rd = new FileReader();
-    rd.onloadend = () => resolve(rd.result);
-    rd.readAsDataURL(blob);
-  });
-
-  // 2) misura l’originale
+  // 2) misura dimensioni originali
   const img = new Image();
   img.src = base64;
   await new Promise(r => (img.onload = r));
   const w = img.width;
   const h = img.height;
 
-  // 3) canvas con filtro più aggressivo
+  // 3) disegno su canvas con filtro di boost (opzionale)
   const canvas = document.createElement('canvas');
   canvas.width  = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d');
-
-  // spingi luminosità, saturazione e contrasto
   ctx.filter = 'brightness(1.2) saturate(1.5) contrast(1.1)';
   ctx.drawImage(img, 0, 0, w, h);
   ctx.filter = 'none';
 
-  // 4) esporta come PNG 
-  const boostedBase64 = canvas.toDataURL('image/png');
+  // 4) estrai un vero JPEG a qualità piena
+  const jpegBlob = await new Promise(resolve =>
+    canvas.toBlob(resolve, 'image/jpeg', 1.0)
+  );
 
-  return {
-    base64: boostedBase64,
-    width:  w,
-    height: h
-  };
+  // 5) blob → base64
+  const boostedBase64 = await new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(jpegBlob);
+  });
+
+  return { base64: boostedBase64, width: w, height: h };
 };
+
 
 
 
@@ -352,10 +346,19 @@ const generaPDF = async () => {
         const { base64, width, height } = await resizeImageSafe(it.immagine);
         let iw = width, ih = height;
         const scale = Math.min((colW[1] - 4) / iw, (rowH - 10) / ih);
-        iw *= scale; ih *= scale;
-        const ext = it.immagine.toLowerCase().endsWith('.png') ? 'PNG' : 'JPEG';
-        pdf.addImage(base64, ext, posX + (colW[1] - iw) / 2, y + (rowH - ih) / 2, iw, ih);
+        iw *= scale;
+        ih *= scale;
+        pdf.addImage(
+          base64,
+          'JPEG',
+          posX + (colW[1] - iw) / 2,
+          y     + (rowH - ih) / 2,
+          iw,
+          ih
+        );
       }
+      posX += colW[1];
+      
       posX += colW[1];
 
       drawCellText(it.unitaMisura || '', posX, y, colW[2], rowH, 6.5, 1);
