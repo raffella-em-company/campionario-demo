@@ -1,6 +1,7 @@
 {
     "short_name": "Campionario",
     "name": "EM Company Campionature",
+    "description": "Author: Raffaella Brugnini | Version: 1.0",
     "icons": [
       {
         "src": "/icons/icon-512.png",
